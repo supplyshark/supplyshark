@@ -11,7 +11,7 @@ def scope_available(scope):
         return False
 
 def scope_404(scope):
-    r = get(f"https://mpjs.com/~{scope}")
+    r = get(f"https://npmjs.com/~{scope}")
     if "NotFoundError: Scope not found" in r.text:
         return True
     else:
