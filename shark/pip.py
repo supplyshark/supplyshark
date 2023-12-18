@@ -15,7 +15,7 @@ def find_reqfile(reqfile):
     packages = []
     with open(reqfile, "r", encoding="utf8", errors="ignore") as f:
         for l in f.readlines():
-            l = clean.packages(l)
+            l = clean.package(l)
             if l[:1].isalpha():
                 packages += [l]
     return packages
