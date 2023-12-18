@@ -10,7 +10,6 @@ def get_user(user):
         load_dotenv()
         g = Github(auth=Auth.Token(getenv("GITHUB_AUTH")))
         user = g.get_user(user)
-        print(user)
     except:
         user = None
     return user
