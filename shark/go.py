@@ -19,5 +19,5 @@ def run(path, repo, output):
 
     users = list(set(gh))
     for user in users:
-        if gh.find_user is None:
+        if github.get_user(user) is None:
             file.out(f"[go] [{repo}] GitHub User: {user}", output)
