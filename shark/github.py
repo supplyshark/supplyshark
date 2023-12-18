@@ -38,6 +38,6 @@ def available(value):
     if user == "":
         return False
     elif get_user(user):
-        return True
-    else:
         return False
+    else:
+        return True
