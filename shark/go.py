@@ -12,7 +12,7 @@ def find_gh(modfile):
 
     return gh
 
-def run(path, user, repo, output):
+def run(path, org_user, repo, output):
     gh = []
     for modfile in search.files(path, "go.mod"):
         gh += find_gh(modfile)
@@ -20,4 +20,4 @@ def run(path, user, repo, output):
     users = list(set(gh))
     for user in users:
         if github.get_user(user) is None:
-            file.out(f"[go] [{user}/{repo}] GitHub User: {user}", output)
+            file.out(f"[go] [{org_user}/{repo}] GitHub User: {user}", output)

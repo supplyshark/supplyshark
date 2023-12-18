@@ -25,10 +25,10 @@ def gem_files(gemfile):
 
     return results
         
-def run(path, user, repo, output):
+def run(path, org_user, repo, output):
     gems = search.gems(path)
     for gem in gems:
-        gem_exists(gem, user, repo, output)
+        gem_exists(gem, org_user, repo, output)
     
     gh = []
     for f in search.files(path, "Gemfile"):
@@ -37,4 +37,4 @@ def run(path, user, repo, output):
     users = list(set(gh))
     for user in users:
         if github.get_user(user) is None:
-            file.out(f"[gem] [{user}/{repo}] GitHub User: {user}", output)
+            file.out(f"[gem] [{org_user}/{repo}] GitHub User: {user}", output)
