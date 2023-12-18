@@ -1,5 +1,6 @@
 # Results files generated from SupplyShark
 results/
+lists/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
