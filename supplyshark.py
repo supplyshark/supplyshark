@@ -62,6 +62,8 @@ if __name__ == "__main__":
     parser.add_argument("-L", type=str)
     args = parser.parse_args()
     
+    shark.file.del_folder("/tmp/.supplyshark")
+
     if args.L is not None:
         run_file(args.L, args.o)
     else:
