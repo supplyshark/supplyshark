@@ -20,7 +20,7 @@ def find_reqfile(reqfile):
                 packages += [l]
     return packages
 
-def run(path, repo, output):
+def run(path, user, repo, output):
     packages = find_pip(path)
     for reqfile in search.files(path, "requirements.txt"):
         packages += find_reqfile(reqfile)
@@ -30,4 +30,4 @@ def run(path, repo, output):
         if p != "" and p != "pip":
             stdout = getoutput(f"poetry search '{p}'")
             if stdout == "":
-                file.out(f"[pip] [{repo}] {p}", output)
+                file.out(f"[pip] [{user}/{repo}] {p}", output)

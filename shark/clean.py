@@ -1,8 +1,8 @@
 def check(result):
     if len(result.split()) > 1:
-        return True
-    else:
         return False
+    else:
+        return True
     
 def package(line):
     for ch in ['"', "'", "`", ";", ",", "}", "+", ")", "("]:
@@ -34,6 +34,8 @@ def package(line):
         line = ""
     elif line == "PATH_TO_TARBALL":
         line = ""
+    elif line == "any-required-dependencies":
+        line = ""
     
     line = line.split("[")[0]
 
@@ -61,7 +63,7 @@ def package_gem(gem):
 
     if gem.endswith(".gem"):
         gem = ""
-    elif gem.starswith("."):
+    elif gem.startswith("."):
         gem = ""
     elif gem.endswith("."):
         gem = gem[:-1]

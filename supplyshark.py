@@ -12,11 +12,11 @@ def run_thread(repos, user, output):
         print(f"[+] Downloading {user}/{repo}")
         path = shark.github.clone_repo(user, repo)
     
-        t1 = Thread(target=shark.npm.main, args=(path, repo, output,))
-        t2 = Thread(target=shark.pip.run, args=(path, repo, output,))
-        t3 = Thread(target=shark.gem.run, args=(path, repo, output,))
-        t4 = Thread(target=shark.cargo.run, args=(path, repo, output,))
-        t5 = Thread(target=shark.go.run, args=(path, repo, output,))
+        t1 = Thread(target=shark.npm.main, args=(path, user, repo, output,))
+        t2 = Thread(target=shark.pip.run, args=(path, user, repo, output,))
+        t3 = Thread(target=shark.gem.run, args=(path, user, repo, output,))
+        t4 = Thread(target=shark.cargo.run, args=(path, user, repo, output,))
+        t5 = Thread(target=shark.go.run, args=(path, user, repo, output,))
         
         t1.start()
         t2.start()

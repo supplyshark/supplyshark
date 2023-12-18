@@ -34,25 +34,25 @@ def get_packages(path):
             packages += search.install(p, path, args)
     return list(set(packages))
 
-def npm_scope(package, repo, output):
+def npm_scope(package, user, repo, output):
     scope = package.split("/")[0]
     if scope_available(scope) and scope_404(scope.split("@")[1]):
-        file.out(f"[npm] [{repo}] {package}", output)
+        file.out(f"[npm] [{user}/{repo}] {package}", output)
 
-def run(package, repo, output):
+def run(package, user, repo, output):
     if package.startswith("@"):
-        npm_scope(package, repo, output)
+        npm_scope(package, user, repo, output)
     elif npm_available(package):
-        file.out(f"[npm] [{repo}] {package}", output)
+        file.out(f"[npm] [{user}/{repo}] {package}", output)
     
-def find_npmfile(data, key, matches, repo, output):
+def find_npmfile(data, key, matches, user, repo, output):
     for k, v in data[key].items():
         if not any(x in v for x in matches):
-            run(k, repo, output)
+            run(k, user, repo, output)
         elif github.available(v):
-            file.out(f"[npm] [{repo}] GitHub User: {v}", output)
+            file.out(f"[npm] [{user}/{repo}] GitHub User: {v}", output)
 
-def get_npmfile(npmfile, repo, output):
+def get_npmfile(npmfile, user, repo, output):
     with open(npmfile, "rb") as f:
         data = json.load(f)
         matches = ["workspace:",
@@ -68,12 +68,12 @@ def get_npmfile(npmfile, repo, output):
         
         for key in ["dependencies", "devDependencies"]:
             if key in data:
-                find_npmfile(data, key, matches, repo, output)
+                find_npmfile(data, key, matches, user, repo, output)
 
-def main(path, repo, output):
+def main(path, user, repo, output):
     packages = get_packages(path)
     for p in packages:
-        run(p, repo, output)   
+        run(p, user, repo, output)   
     
     for npmfile in search.files(path, "package.json"):
-        get_npmfile(npmfile, repo, output)
+        get_npmfile(npmfile, user, repo, output)

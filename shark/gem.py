@@ -10,10 +10,10 @@ def gem_404(gem):
     else:
         return False
 
-def gem_exists(gem, repo, output):
+def gem_exists(gem, user, repo, output):
     stdout = getoutput(f"gem search '{gem}'")
     if len(stdout) == 0 and gem_404(gem):
-        file.out(f"[gem] [{repo}] {gem}", output)
+        file.out(f"[gem] [{user}/{repo}] {gem}", output)
 
 def gem_files(gemfile):
     results = []
@@ -25,10 +25,10 @@ def gem_files(gemfile):
 
     return results
         
-def run(path, repo, output):
+def run(path, user, repo, output):
     gems = search.gems(path)
     for gem in gems:
-        gem_exists(gem, repo, output)
+        gem_exists(gem, user, repo, output)
     
     gh = []
     for f in search.files(path, "Gemfile"):
@@ -37,4 +37,4 @@ def run(path, repo, output):
     users = list(set(gh))
     for user in users:
         if github.get_user(user) is None:
-            file.out(f"[gem] [{repo}] GitHub User: {user}", output)
+            file.out(f"[gem] [{user}/{repo}] GitHub User: {user}", output)

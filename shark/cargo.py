@@ -13,7 +13,7 @@ def find_git(cargofile):
                     gh += pattern.findall(v['git'])
     return gh
 
-def run(path, repo, output):
+def run(path, user, repo, output):
     gh = []
     for cargofile in search.files(path, "Cargo.toml"):
         gh += find_git(cargofile)
@@ -21,4 +21,4 @@ def run(path, repo, output):
     users = list(set(gh))
     for user in users:
         if github.get_user(user) is None:
-            file.out(f"[cargo] [{repo}] GitHub User: {user}", output)
+            file.out(f"[cargo] [{user}/{repo}] GitHub User: {user}", output)
