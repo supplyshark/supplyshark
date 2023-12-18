@@ -34,37 +34,25 @@ def get_packages(path):
             packages += search.install(p, path, args)
     return list(set(packages))
 
-def npm_scope(invalid, package, repo, output):
+def npm_scope(package, repo, output):
     scope = package.split("/")[0]
-    if not any(x in scope for x in invalid):
-        if scope_available(scope) and scope_404(scope.split("@")[1]):
-            file.out(f"[npm] [{repo}] {package}", output)
-        else:
-            invalid += [scope]
-    return invalid
+    if scope_available(scope) and scope_404(scope.split("@")[1]):
+        file.out(f"[npm] [{repo}] {package}", output)
 
-def run(invalid, package, repo, output):
+def run(package, repo, output):
     if package.startswith("@"):
-        invalid += npm_scope(invalid, package, repo, output)
+        npm_scope(package, repo, output)
     elif npm_available(package):
         file.out(f"[npm] [{repo}] {package}", output)
     
-    return invalid
-
-def find_npmfile(invalid, data, key, matches, repo, output):
+def find_npmfile(data, key, matches, repo, output):
     for k, v in data[key].items():
         if not any(x in v for x in matches):
-            invalid += run(invalid, k, repo, output)
+            run(k, repo, output)
         elif github.available(v):
             file.out(f"[npm] [{repo}] GitHub User: {v}", output)
-    return invalid
 
-def run_npmfile(invalid, data, key, matches, repo, output):
-    if key in data:
-        invalid += find_npmfile(invalid, data, key, matches, repo, output)
-    return invalid
-
-def get_npmfile(invalid, npmfile, repo, output):
+def get_npmfile(npmfile, repo, output):
     with open(npmfile, "rb") as f:
         data = json.load(f)
         matches = ["workspace:",
@@ -79,13 +67,13 @@ def get_npmfile(invalid, npmfile, repo, output):
                    "link:"]
         
         for key in ["dependencies", "devDependencies"]:
-            invalid += run_npmfile(invalid, data, key, matches, repo, output)
-    return invalid
+            if key in data:
+                find_npmfile(data, key, matches, repo, output)
 
 def main(path, repo, output):
     packages = get_packages(path)
-    invalid = []
     for p in packages:
-        invalid += run(invalid, p, repo, output)
+        run(p, repo, output)   
+    
     for npmfile in search.files(path, "package.json"):
-        invalid += get_npmfile(invalid, npmfile, repo, output)
+        get_npmfile(npmfile, repo, output)

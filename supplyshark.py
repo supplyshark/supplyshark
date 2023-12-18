@@ -9,6 +9,7 @@ def chunk(ls, n):
 
 def run(repos, user, output):
     for repo in repos:
+        print(f"[+] Downloading {repo}")
         path = shark.github.clone_repo(user, repo)
     
         t1 = Thread(target=shark.npm.main, args=(path, repo, output,))
@@ -16,11 +17,18 @@ def run(repos, user, output):
         t3 = Thread(target=shark.gem.run, args=(path, repo, output,))
         t4 = Thread(target=shark.cargo.run, args=(path, repo, output,))
         t5 = Thread(target=shark.go.run, args=(path, repo, output,))
+        
+        t1.start()
+        t2.start()
+        t3.start()
+        t4.start()
+        t5.start()
 
-        tt = [t1, t2, t3, t4, t5]
-        for t in tt:
-            t.start()
-            t.join()
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
+        t5.join()
     
         shark.file.del_folder(path)
 
