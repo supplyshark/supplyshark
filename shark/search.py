@@ -39,6 +39,6 @@ def yarn(path):
 def files(path, file):
     files = []
     for f in Path(path).rglob(file):
-        if "node_modules" not in f:
+        if "node_modules" not in str(f):
             files += [f]
     return files
