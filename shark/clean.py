@@ -36,6 +36,10 @@ def package(line):
         line = ""
     elif line == "any-required-dependencies":
         line = ""
+    elif line == "previously":
+        line = ""
+    elif line == "*":
+        line = ""
     
     line = line.split("[")[0]
 
