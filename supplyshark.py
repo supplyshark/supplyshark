@@ -36,7 +36,6 @@ def run(user, output):
     tmp = f"/tmp/.supplyshark/{user}"
     Path(tmp).mkdir(parents=True, exist_ok=True)
     repos = shark.github.get_repos(user)
-    
     c = chunk(repos, multiprocessing.cpu_count())
 
     procs = []
@@ -62,7 +61,9 @@ if __name__ == "__main__":
     parser.add_argument("-L", type=str)
     args = parser.parse_args()
     
-    shark.file.del_folder("/tmp/.supplyshark")
+    tmp = "/tmp/.supplyshark"
+    if Path(tmp).exists():
+        shark.file.del_folder(tmp)
 
     if args.L is not None:
         run_file(args.L, args.o)

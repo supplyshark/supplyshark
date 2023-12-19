@@ -7,7 +7,7 @@ def find_pip(path):
         if p != "poetry":
             args = ["", "--upgrade ", "-U "]
         else:
-            args = []
+            args = [""]
         packages += search.install(p, path, args)
     return packages
 

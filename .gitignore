@@ -1,6 +1,6 @@
 # Results files generated from SupplyShark
-results/
-lists/
+results/*.txt
+lists/*.txt
 TODO.txt
 
 # Byte-compiled / optimized / DLL files
