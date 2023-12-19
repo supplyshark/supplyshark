@@ -40,6 +40,8 @@ def package(line):
         line = ""
     elif line == "*":
         line = ""
+    elif line.startswith("{"):
+        line = ""
     
     line = line.split("[")[0]
 
