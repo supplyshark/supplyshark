@@ -13,8 +13,7 @@ def package(line):
     line = line.split("\\")[0].split("@latest")[0].split("~")[0]
 
     if line.endswith("."):
-        line = line[:1]
-    
+        line = line[:-1]
     if line.startswith("."):
         line = ""
     
