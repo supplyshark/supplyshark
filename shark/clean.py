@@ -41,6 +41,10 @@ def package(line):
         line = ""
     elif line.startswith("{"):
         line = ""
+    elif "does-not-exist" in line:
+        line = ""
+    elif line == "ended":
+        line = ""
     
     line = line.split("[")[0]
 
