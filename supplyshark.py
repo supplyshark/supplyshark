@@ -59,6 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("-u", type=str)
     parser.add_argument("-o", type=str, required=True)
     parser.add_argument("-L", type=str)
+    parser.add_argument("-r", type=str)
     args = parser.parse_args()
     
     tmp = "/tmp/.supplyshark"
@@ -67,5 +68,7 @@ if __name__ == "__main__":
 
     if args.L is not None:
         run_file(args.L, args.o)
+    elif args.r is not None:
+        run_thread(list(args.r), args.u, args.o)
     else:
         run(args.u, args.o)
