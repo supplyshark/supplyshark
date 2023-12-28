@@ -26,3 +26,15 @@
      :--``             )/
 
           - - - {  S U P P L Y  S H A R K  } - - -
+
+
+### .env
+
+```sh
+# GitHub token
+GITHUB_AUTH=
+
+# Supabase
+SUPABASE_URL=
+SUPABASE_KEY=
+```
