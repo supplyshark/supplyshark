@@ -14,12 +14,16 @@ def gh_get_user(user):
         user = None
     return user
 
-def gl_get_repos(user):
+def gl_auth():
     load_dotenv()
     token = getenv("GITLAB_AUTH")
     gl = Gitlab(private_token=token)
+    return gl
+
+def gl_get_repos(user):
+    gl = gl_auth()
     group = gl.groups.get(user)
-    projects = group.projects.list(get_all=True, archived=0)
+    projects = group.projects.list(get_all=True, archived=0, include_subgroups=1)
     return list(map(lambda x: x.http_url_to_repo, filter(lambda x: user in x.http_url_to_repo, projects)))
 
 def gh_get_repos(user):
