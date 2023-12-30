@@ -10,12 +10,13 @@ def chunk(ls, n):
 def run_thread(repos, user, output, gitlab):
     for repo in repos:
         if gitlab:
-            name = repo.split("/")[4].split(".git")[0]
+            name = repo.split(f"https://gitlab.com/{user}/")[1].split(".git")[0]
+            print(f"[+] Downloading {user}/{name}")
+            path = shark.github.gl_clone_repo(repo)
         else:
             name = repo
-
-        print(f"[+] Downloading {user}/{name}")
-        path = shark.github.clone_repo(user, name, gitlab)
+            print(f"[+] Downloading {user}/{name}")
+            path = shark.github.gh_clone_repo(user, name)
     
         t1 = Thread(target=shark.npm.main, args=(path, user, name, output, gitlab,))
         t2 = Thread(target=shark.pip.run, args=(path, user, name, output, gitlab,))

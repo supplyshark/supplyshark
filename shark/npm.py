@@ -52,7 +52,7 @@ def run(package, user, repo, output, gitlab):
 def find_npmfile(data, key, matches, user, repo, output, gitlab):
     for k, v in data[key].items():
         if not any(x in v for x in matches):
-            run(k, user, repo, output)
+            run(k, user, repo, output, gitlab)
         elif github.gh_available(v):
             file.out(f"[npm] [{user}/{repo}] GitHub User: {v}", output)
             url = github.get_url(user, repo, gitlab)

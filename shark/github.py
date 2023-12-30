@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from github import Github, Auth
 from gitlab import Gitlab
+from pathlib import Path
 from pygit2 import clone_repository
 from os import getenv
 import re
@@ -30,10 +31,16 @@ def gh_get_repos(user):
     repos = gh_get_user(user).get_repos()
     return list(map(lambda x: x.name, filter(lambda x: not x.fork and not x.archived, repos)))
 
-def clone_repo(user, repo, gitlab):
+def gh_clone_repo(user, repo):
     path = f"/tmp/.supplyshark/{user}/{repo}"
-    url = get_url(user, repo, gitlab)
-    clone_repository(f"{url}.git", path)
+    clone_repository(f"https://github.com/{user}/{repo}.git", path)
+    return path
+
+def gl_clone_repo(url):
+    name = url.split("https://gitlab.com")[1].split(".git")[0]
+    path = f"/tmp/.supplyshark/{name}"
+    Path(path).mkdir(parents=True, exist_ok=True)
+    clone_repository(url, path)
     return path
 
 def gh_available(value):
