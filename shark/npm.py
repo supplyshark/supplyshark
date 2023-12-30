@@ -4,7 +4,7 @@ from requests import get
 import json
 
 def scope_available(scope):
-    stdout = getoutput(f"npm search {scope}")
+    stdout = getoutput(f"npm search '{scope}'")
     if "No matches found" in stdout:
         return True
     else:
