@@ -70,7 +70,6 @@ if __name__ == "__main__":
     parser.add_argument("-o", type=str, required=True)
     parser.add_argument("-L", type=str)
     parser.add_argument("-r", type=str)
-    parser.add_argument("--github", type=bool)
     parser.add_argument("--gitlab", type=bool)
     args = parser.parse_args()
     

@@ -3,7 +3,6 @@ from github import Github, Auth
 from gitlab import Gitlab
 from pygit2 import clone_repository
 from os import getenv
-from shutil import rmtree
 import re
 
 def gh_get_user(user):
