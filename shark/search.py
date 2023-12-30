@@ -17,7 +17,7 @@ def install(package, path, args):
 def gems(path):
     gems = []
     for a in ["install ", "i ", '\\\"', '\'']:
-        stdout = getoutput(f'grep -r --exclude-dir=node_modules "gem {a}" {path} | grep -vE "igem |agem |_gem |git:|github.com|rails-assets.org"')
+        stdout = getoutput(f'grep -r --exclude-dir=node_modules "gem {a}" {path} | grep -vE "igem |agem |_gem |git:|path:|github.com|rails-assets.org"')
         pattern = re.compile(r"gem {a}(.*)".format(a=a))
         result = pattern.findall(stdout)
         for gem in result:
