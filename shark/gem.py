@@ -36,5 +36,5 @@ def run(path, org_user, repo, output):
     
     users = list(set(gh))
     for user in users:
-        if github.get_user(user) is None:
+        if github.gh_get_user(user) is None:
             file.out(f"[gem] [{org_user}/{repo}] GitHub User: {user}", output)

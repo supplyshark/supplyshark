@@ -49,7 +49,7 @@ def find_npmfile(data, key, matches, user, repo, output):
     for k, v in data[key].items():
         if not any(x in v for x in matches):
             run(k, user, repo, output)
-        elif github.available(v):
+        elif github.gh_available(v):
             file.out(f"[npm] [{user}/{repo}] GitHub User: {v}", output)
 
 def get_npmfile(npmfile, user, repo, output):
