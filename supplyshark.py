@@ -9,8 +9,6 @@ def chunk(ls, n):
 
 def run_thread(repos, user, output, gitlab):
     for repo in repos:
-        print(f"[+] Downloading {user}/{repo}")
-
         if gitlab:
             name = repo.split("/")[4].split(".git")[0]
         else:
@@ -70,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", type=str, required=True)
     parser.add_argument("-L", type=str)
     parser.add_argument("-r", type=str)
-    parser.add_argument("--gitlab", type=bool)
+    parser.add_argument("--gitlab", type=bool, action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
     
     tmp = "/tmp/.supplyshark"
