@@ -1,4 +1,4 @@
-from . import clean, file, search
+from . import clean, db, file, github, search
 from subprocess import getoutput
 
 def find_pip(path):
@@ -20,7 +20,7 @@ def find_reqfile(reqfile):
                 packages += [l]
     return packages
 
-def run(path, user, repo, output):
+def run(path, user, repo, output, gitlab):
     packages = find_pip(path)
     for reqfile in search.files(path, "requirements.txt"):
         packages += find_reqfile(reqfile)
@@ -31,3 +31,5 @@ def run(path, user, repo, output):
             stdout = getoutput(f"poetry search '{p}'")
             if stdout == "":
                 file.out(f"[pip] [{user}/{repo}] {p}", output)
+                url = github.get_url(user, repo, gitlab)
+                db.write_results(p, 7, user, repo, url)

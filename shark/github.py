@@ -26,13 +26,10 @@ def gh_get_repos(user):
     repos = gh_get_user(user).get_repos()
     return list(map(lambda x: x.name, filter(lambda x: not x.fork and not x.archived, repos)))
 
-def clone_repo(user, name, gitlab):
-    path = f"/tmp/.supplyshark/{user}/{name}"
-    if gitlab:
-        url = "https://gitlab.com"
-    else:
-        url = "https://github.com"
-    clone_repository(f"{url}/{user}/{name}.git", path)
+def clone_repo(user, repo, gitlab):
+    path = f"/tmp/.supplyshark/{user}/{repo}"
+    url = get_url(user, repo, gitlab)
+    clone_repository(f"{url}.git", path)
     return path
 
 def gh_available(value):
@@ -53,3 +50,9 @@ def gh_available(value):
         return False
     else:
         return True
+
+def get_url(user, repo, gitlab):
+    if gitlab:
+        url = f"https://gitlab.com/{user}/{repo}"
+    else:
+        url = f"https://github.com/{user}/{repo}"
