@@ -3,6 +3,7 @@ from supabase import create_client, Client
 from os import getenv
 
 def auth():
+    load_dotenv()
     url = getenv("SUPABASE_URL")
     key = getenv("SUPABASE_KEY")
     supabase = create_client(url, key)

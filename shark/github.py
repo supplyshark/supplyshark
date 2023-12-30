@@ -56,3 +56,4 @@ def get_url(user, repo, gitlab):
         url = f"https://gitlab.com/{user}/{repo}"
     else:
         url = f"https://github.com/{user}/{repo}"
+    return url
