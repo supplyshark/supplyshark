@@ -27,3 +27,12 @@
 
           - - - {  S U P P L Y  S H A R K  } - - -
 
+## Install
+
+- rubygems
+- npm
+- poetry
+
+```
+pip install -r requirements.txt
+```
