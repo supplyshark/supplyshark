@@ -15,14 +15,17 @@ def gh_get_user(user):
         user = None
     return user
 
-def gl_auth():
-    load_dotenv()
-    token = getenv("GITLAB_AUTH")
-    gl = Gitlab(private_token=token)
+def gl_auth(url):
+    if url != "https://gitlab.com":
+        gl = Gitlab(url)
+    else:
+        load_dotenv()
+        token = getenv("GITLAB_AUTH")
+        gl = Gitlab(private_token=token)
     return gl
 
-def gl_get_repos(user):
-    gl = gl_auth()
+def gl_get_repos(user, url):
+    gl = gl_auth(url)
     group = gl.groups.get(user)
     projects = group.projects.list(get_all=True, archived=0, include_subgroups=1)
     return list(map(lambda x: x.http_url_to_repo, filter(lambda x: user in x.http_url_to_repo, projects)))
@@ -36,11 +39,11 @@ def gh_clone_repo(user, repo):
     clone_repository(f"https://github.com/{user}/{repo}.git", path)
     return path
 
-def gl_clone_repo(url):
-    name = url.split("https://gitlab.com")[1].split(".git")[0]
+def gl_clone_repo(repo, url):
+    name = repo.split(f"{url}")[1].split(".git")[0]
     path = f"/tmp/.supplyshark/{name}"
     Path(path).mkdir(parents=True, exist_ok=True)
-    clone_repository(url, path)
+    clone_repository(repo, path)
     return path
 
 def gh_available(value):

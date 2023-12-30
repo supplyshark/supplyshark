@@ -7,12 +7,12 @@ import shark
 def chunk(ls, n):
     return [ls[i::n] for i in range(n)]
 
-def run_thread(repos, user, output, gitlab):
+def run_thread(repos, user, output, gitlab, url):
     for repo in repos:
         if gitlab:
-            name = repo.split(f"https://gitlab.com/{user}/")[1].split(".git")[0]
+            name = repo.split(f"{url}/{user}/")[1].split(".git")[0]
             print(f"[+] Downloading {user}/{name}")
-            path = shark.github.gl_clone_repo(repo)
+            path = shark.github.gl_clone_repo(repo, url)
         else:
             name = repo
             print(f"[+] Downloading {user}/{name}")
@@ -38,18 +38,18 @@ def run_thread(repos, user, output, gitlab):
     
         shark.file.del_folder(path)
 
-def run(user, output, gitlab):
+def run(user, output, gitlab, url):
     tmp = f"/tmp/.supplyshark/{user}"
     Path(tmp).mkdir(parents=True, exist_ok=True)
     if gitlab:
-        repos = shark.github.gl_get_repos(user)
+        repos = shark.github.gl_get_repos(user, url)
     else:
         repos = shark.github.gh_get_repos(user)
     c = chunk(repos, multiprocessing.cpu_count())
 
     procs = []
     for i, s in enumerate(c):
-        proc = multiprocessing.Process(target=run_thread, args=(s, user, output, gitlab))
+        proc = multiprocessing.Process(target=run_thread, args=(s, user, output, gitlab, url))
         procs.append(proc)
         proc.start()
 
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("-L", type=str)
     parser.add_argument("-r", type=str)
     parser.add_argument("--gitlab", type=bool, action=argparse.BooleanOptionalAction)
+    parser.add_argument("--url", type=str, default="https://gitlab.com")
     args = parser.parse_args()
     
     tmp = "/tmp/.supplyshark"
@@ -84,4 +85,4 @@ if __name__ == "__main__":
         run_thread([args.r], args.u, args.o, args.gitlab)
     # Single user
     else:
-        run(args.u, args.o, args.gitlab)
+        run(args.u, args.o, args.gitlab, args.url)
