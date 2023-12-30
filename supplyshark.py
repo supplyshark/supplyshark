@@ -7,36 +7,42 @@ import shark
 def chunk(ls, n):
     return [ls[i::n] for i in range(n)]
 
+def threads(path, user, name, output, gitlab):
+    t1 = Thread(target=shark.npm.main, args=(path, user, name, output, gitlab,))
+    t2 = Thread(target=shark.pip.run, args=(path, user, name, output, gitlab,))
+    t3 = Thread(target=shark.gem.run, args=(path, user, name, output, gitlab,))
+    t4 = Thread(target=shark.cargo.run, args=(path, user, name, output, gitlab,))
+    t5 = Thread(target=shark.go.run, args=(path, user, name, output, gitlab,))
+    
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+    t5.start()
+
+    t1.join()
+    t2.join()
+    t3.join()
+    t4.join()
+    t5.join()
+    
+    shark.file.del_folder(path)
+
 def run_thread(repos, user, output, gitlab, url):
     for repo in repos:
-        if gitlab:
-            name = repo.split(f"{url}/{user}/")[1].split(".git")[0]
-            print(f"[+] Downloading {user}/{name}")
-            path = shark.github.gl_clone_repo(repo, url)
-        else:
-            name = repo
-            print(f"[+] Downloading {user}/{name}")
-            path = shark.github.gh_clone_repo(user, name)
-    
-        t1 = Thread(target=shark.npm.main, args=(path, user, name, output, gitlab,))
-        t2 = Thread(target=shark.pip.run, args=(path, user, name, output, gitlab,))
-        t3 = Thread(target=shark.gem.run, args=(path, user, name, output, gitlab,))
-        t4 = Thread(target=shark.cargo.run, args=(path, user, name, output, gitlab,))
-        t5 = Thread(target=shark.go.run, args=(path, user, name, output, gitlab,))
-        
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t5.start()
-
-        t1.join()
-        t2.join()
-        t3.join()
-        t4.join()
-        t5.join()
-    
-        shark.file.del_folder(path)
+        try:
+            if gitlab:
+                name = repo.split(f"{url}/{user}/")[1].split(".git")[0]
+                print(f"[+] Downloading {user}/{name}")
+                path = shark.github.gl_clone_repo(repo, url)
+            else:
+                name = repo
+                print(f"[+] Downloading {user}/{name}")
+                path = shark.github.gh_clone_repo(user, name)
+            
+            threads(path, user, name, output, gitlab)
+        except:
+            pass
 
 def run(user, output, gitlab, url):
     tmp = f"/tmp/.supplyshark/{user}"
