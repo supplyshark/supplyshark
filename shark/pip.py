@@ -32,4 +32,4 @@ def run(path, user, repo, output, gitlab):
             if stdout == "":
                 file.out(f"[pip] [{user}/{repo}] {p}", output)
                 url = github.get_url(user, repo, gitlab)
-                db.write_results(p, 7, user, repo, url)
+                #db.write_results(p, 7, user, repo, url)

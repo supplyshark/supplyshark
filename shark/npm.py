@@ -39,7 +39,7 @@ def npm_scope(package, user, repo, output, gitlab):
     if scope_available(scope) and scope_404(scope.split("@")[1]):
         file.out(f"[npm] [{user}/{repo}] {package}", output)
         url = github.get_url(user, repo, gitlab)
-        db.write_results(package, 1, user, repo, url)
+        #db.write_results(package, 1, user, repo, url)
 
 def run(package, user, repo, output, gitlab):
     if package.startswith("@"):
@@ -47,7 +47,7 @@ def run(package, user, repo, output, gitlab):
     elif npm_available(package):
         file.out(f"[npm] [{user}/{repo}] {package}", output)
         url = github.get_url(user, repo, gitlab)
-        db.write_results(package, 1, user, repo, url)
+        #db.write_results(package, 1, user, repo, url)
     
 def find_npmfile(data, key, matches, user, repo, output, gitlab):
     for k, v in data[key].items():
@@ -56,7 +56,7 @@ def find_npmfile(data, key, matches, user, repo, output, gitlab):
         elif github.gh_available(v):
             file.out(f"[npm] [{user}/{repo}] GitHub User: {v}", output)
             url = github.get_url(user, repo, gitlab)
-            db.write_results(v, 2, user, repo, url)
+            #db.write_results(v, 2, user, repo, url)
 
 def get_npmfile(npmfile, user, repo, output, gitlab):
     with open(npmfile, "rb") as f:

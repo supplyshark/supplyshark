@@ -15,7 +15,7 @@ def gem_exists(gem, user, repo, output, gitlab):
     if len(stdout) == 0 and gem_404(gem):
         file.out(f"[gem] [{user}/{repo}] {gem}", output)
         url = github.get_url(user, repo, gitlab)
-        db.write_results(gem, 5, user, repo, url)
+        #db.write_results(gem, 5, user, repo, url)
 
 def gem_files(gemfile):
     results = []
@@ -41,4 +41,4 @@ def run(path, org_user, repo, output, gitlab):
         if github.gh_get_user(user) is None:
             file.out(f"[gem] [{org_user}/{repo}] GitHub User: {user}", output)
             url = github.get_url(org_user, repo, gitlab)
-            db.write_results(user, 6, org_user, repo, url)
+            #db.write_results(user, 6, org_user, repo, url)

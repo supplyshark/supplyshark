@@ -22,4 +22,4 @@ def run(path, org_user, repo, output, gitlab):
         if github.gh_get_user(user) is None:
             file.out(f"[go] [{org_user}/{repo}] GitHub User: {user}", output)
             url = github.get_url(org_user, repo, gitlab)
-            db.write_results(user, 3, org_user, repo, url)
+            #db.write_results(user, 3, org_user, repo, url)
