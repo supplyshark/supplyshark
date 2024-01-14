@@ -64,10 +64,10 @@ def run(user, output, gitlab, url):
 
     shark.file.del_folder(tmp)
 
-def run_file(file, output, gitlab):
+def run_file(file, output, gitlab, url):
     with open(file, "r") as f:
         for ff in f.readlines():
-            run(ff.strip(), output, gitlab)
+            run(ff.strip(), output, gitlab, url)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     # Read list of orgs
     if args.L is not None:
-        run_file(args.L, args.o, args.gitlab)
+        run_file(args.L, args.o, args.gitlab, args.url)
     # Specific repository
     elif args.r is not None:
         run_thread([args.r], args.u, args.o, args.gitlab)
