@@ -88,7 +88,7 @@ if __name__ == "__main__":
         run_file(args.L, args.o, args.gitlab, args.url)
     # Specific repository
     elif args.r is not None:
-        run_thread([args.r], args.u, args.o, args.gitlab)
+        run_thread([args.r], args.u, args.o, args.gitlab, args.url)
     # Single user
     else:
         run(args.u, args.o, args.gitlab, args.url)
