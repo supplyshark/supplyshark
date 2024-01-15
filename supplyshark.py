@@ -67,7 +67,10 @@ def run(user, output, gitlab, url):
 def run_file(file, output, gitlab, url):
     with open(file, "r") as f:
         for ff in f.readlines():
-            run(ff.strip(), output, gitlab, url)
+            try:
+                run(ff.strip(), output, gitlab, url)
+            except:
+                pass
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
