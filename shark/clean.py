@@ -57,6 +57,9 @@ def package(line):
     if "@x.y.z" in line:
         line = ""
     
+    if line == "failed!":
+        line = ""
+    
     line = line.lower().rstrip()
 
     return line
