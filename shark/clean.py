@@ -1,3 +1,5 @@
+import re
+
 def check(result):
     if len(result.split()) > 1:
         return False
@@ -60,7 +62,26 @@ def package(line):
     if line == "failed!":
         line = ""
     
+    if line == "!!!":
+        line = ""
+
+    if line.endswith("."):
+        line = line[:-1]
+    
     line = line.lower().rstrip()
+
+    if line == "sission":
+        line = ""
+    if line.startswith("**") and line.endswith("**"):
+        line = ""
+
+    pattern = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+", re.IGNORECASE)
+    if pattern.match(line):
+        line = ""
+    
+    pattern2 = re.compile(r"[0-9]+\.[0-9]+s", re.IGNORECASE)
+    if pattern2.match(line):
+        line = ""
 
     return line
 
