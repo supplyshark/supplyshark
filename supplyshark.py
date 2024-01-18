@@ -1,7 +1,8 @@
+from argparse import ArgumentParser
 from pathlib import Path
 from threading import Thread
 from sys import exit
-import argparse
+import concurrent.futures
 import multiprocessing
 import shark
 
@@ -74,7 +75,7 @@ def run_file(file, output, gitlab, url):
                 pass
 
 def old_main():
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument("-u", type=str)
     parser.add_argument("-o", type=str, required=True)
     parser.add_argument("-L", type=str)
@@ -106,6 +107,13 @@ def start(uid):
     repos = settings['repositories']
     forked = settings['forked']
     archived = settings['archived']
+
+    tmp = f"/tmp/.supplyshark/{account}"
+    Path(tmp).mkdir(parents=True, exist_ok=True)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        gh_download = [executor.submit(shark.github.gh_clone_repo, account, repo) for repo in repos]
+        concurrent.futures.wait(gh_download)
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

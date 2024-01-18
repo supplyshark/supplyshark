@@ -36,7 +36,10 @@ def gh_get_repos(user):
 
 def gh_clone_repo(user, repo):
     path = f"/tmp/.supplyshark/{user}/{repo}"
-    clone_repository(f"https://github.com/{user}/{repo}.git", path)
+    try:
+        clone_repository(f"git://github.com/{user}/{repo}.git", path)
+    except:
+        pass
     return path
 
 def gl_clone_repo(repo, url):
