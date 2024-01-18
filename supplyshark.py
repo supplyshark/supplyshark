@@ -72,7 +72,7 @@ def run_file(file, output, gitlab, url):
             except:
                 pass
 
-if __name__ == "__main__":
+def old_main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", type=str)
     parser.add_argument("-o", type=str, required=True)
@@ -95,3 +95,17 @@ if __name__ == "__main__":
     # Single user
     else:
         run(args.u, args.o, args.gitlab, args.url)
+
+if __name__ == "__main__":
+    runs = shark.db.get_scheduled_runs()
+    for uid in runs:
+        settings = shark.db.fetch_user_app_settings(uid)
+        id = settings['installation_id']
+        account = settings['account_name']
+        repos = settings['repositories']
+        forked = settings['forked']
+        archived = settings['archived']
+        
+        if shark.db.is_active(uid):
+            sub = shark.db.get_subscription_name(uid)
+            print(sub)
