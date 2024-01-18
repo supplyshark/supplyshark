@@ -1,5 +1,6 @@
 from pathlib import Path
 from threading import Thread
+from sys import exit
 import argparse
 import multiprocessing
 import shark
@@ -96,16 +97,22 @@ def old_main():
     else:
         run(args.u, args.o, args.gitlab, args.url)
 
+def start(uid):
+    settings = shark.db.fetch_user_app_settings(uid)
+    sub = shark.db.get_subscription_name(uid)
+
+    id = settings['installation_id']
+    account = settings['account_name']
+    repos = settings['repositories']
+    forked = settings['forked']
+    archived = settings['archived']
+
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
+    if len(runs) == 0:
+        print("No scheduled runs today.")
+        exit(0)
+
     for uid in runs:
-        settings = shark.db.fetch_user_app_settings(uid)
-        id = settings['installation_id']
-        account = settings['account_name']
-        repos = settings['repositories']
-        forked = settings['forked']
-        archived = settings['archived']
-        
         if shark.db.is_active(uid):
-            sub = shark.db.get_subscription_name(uid)
-            print(sub)
+            start(uid)

@@ -1,6 +1,6 @@
 from datetime import datetime
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import create_client
 from os import getenv
 
 def auth():
