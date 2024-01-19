@@ -2,6 +2,24 @@ from . import db, github, search, file
 from subprocess import getoutput
 from requests import get
 import json
+import asyncio
+import aiofiles
+from pathlib import Path
+from collections import defaultdict
+
+async def find_package_json(directory: str) -> list:
+    packages = defaultdict(set)
+    
+    async def process_file(file_path: Path) -> None:
+        async with aiofiles.open(file_path, 'r') as f:
+            data = json.loads(await f.read())
+            for key in ('dependencies', 'devDependencies'):
+                packages[key].update(data.get(key, {}).keys())
+    
+    directory = Path(directory).resolve()
+    tasks = [asyncio.create_task(process_file(file)) for file in directory.glob('*/package.json')]
+    await asyncio.gather(*tasks)
+    return list(packages['dependencies'].union(packages['devDependencies']))
 
 def scope_available(scope):
     stdout = getoutput(f"npm search '{scope}'")

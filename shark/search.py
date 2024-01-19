@@ -1,10 +1,12 @@
 from . import clean
-from pathlib import Path
 from subprocess import getoutput
 import re
 import asyncio
 import aiofiles
 import shlex
+import pathlib
+import json
+from collections import defaultdict
 
 async def get_packages(path, username, repo):
     func_args_list = [
@@ -56,9 +58,9 @@ async def gem_install_files(path, username):
 
 async def copy_files(path, username, repo, filename):
     file_paths = []
-    dest_dir = Path(f'/tmp/.supplyshark/_output/{username}/{repo}')
+    dest_dir = pathlib.Path(f'/tmp/.supplyshark/_output/{username}/{repo}')
 
-    for root in Path(path).rglob(filename):
+    for root in pathlib.Path(path).rglob(filename):
         file_paths.append(root)
     
     for file_path in file_paths:
@@ -72,6 +74,8 @@ async def copy_files(path, username, repo, filename):
         async with aiofiles.open(file_path, 'rb') as input_file, aiofiles.open(dest_file, 'wb') as output_file:
             data = await input_file.read()
             await output_file.write(data)
+
+
 
 def install(package, path, args):
     packages = []
@@ -108,7 +112,7 @@ def yarn(path):
 
 def files(path, file):
     files = []
-    for f in Path(path).rglob(file):
+    for f in pathlib.Path(path).rglob(file):
         if "node_modules" not in str(f):
             files += [f]
     return files

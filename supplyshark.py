@@ -48,7 +48,10 @@ async def start(subscription, settings):
         search_files = [await shark.search.get_packages(path, account, repo) for path, repo in zip(paths, repo_queue)]
     
     rmtree(tmp)
-            
+
+    async with sem:
+        newlist = await shark.npm.find_package_json(copy_dir)
+
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
     if len(runs) == 0:
