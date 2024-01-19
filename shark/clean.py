@@ -5,7 +5,16 @@ def check(result):
         return False
     else:
         return True
-    
+
+def search(lines):
+    matches = []
+    pattern = re.compile(r'(install|add)(?: -(?:g|D|U)| --(?:save|dev|global))? (.*)')
+    for line in lines:
+        match = pattern.search(line)
+        if match and check(match.group(2)):
+            matches += [package(match.group(2))]
+    return matches
+
 def package(line):
     for ch in ['"', "'", "`", ";", ",", "}", "+", ")", "("]:
         if ch in line:

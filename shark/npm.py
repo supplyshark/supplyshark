@@ -1,4 +1,4 @@
-from . import db, github, search, file
+from . import db, github, search, file, clean
 from subprocess import getoutput
 from requests import get
 import json
@@ -6,6 +6,11 @@ import asyncio
 import aiofiles
 from pathlib import Path
 from collections import defaultdict
+import re
+from typing import List
+import csv
+from aiopath import AsyncPath
+
 
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
@@ -17,9 +22,20 @@ async def find_package_json(directory: str) -> list:
                 packages[key].update(data.get(key, {}).keys())
     
     directory = Path(directory).resolve()
-    tasks = [asyncio.create_task(process_file(file)) for file in directory.glob('*/package.json')]
+    tasks = [asyncio.create_task(process_file(file)) for file in directory.rglob('package.json')]
     await asyncio.gather(*tasks)
     return list(packages['dependencies'].union(packages['devDependencies']))
+
+def read_npm_search_csv(path: str) -> list:
+    matches = defaultdict(set)
+
+    with open(f"{path}/npm_search.csv", 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            matches[row['match']]
+
+    matches_list = list(matches.keys())
+    return clean.search(matches_list)
 
 def scope_available(scope):
     stdout = getoutput(f"npm search '{scope}'")

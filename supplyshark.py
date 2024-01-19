@@ -3,6 +3,7 @@ from sys import exit
 import asyncio
 import shark
 from shutil import rmtree
+import csv
 
 async def start(subscription, settings):
     id = settings['installation_id']
@@ -44,13 +45,20 @@ async def start(subscription, settings):
     async with sem:
         gh_download = [paths.append(await shark.github.gh_clone_repo(account, repo, token)) for repo in repo_queue]
     
+    with open(f"{copy_dir}/npm_search.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(['file', 'line', 'match'])
+
     async with sem:
         search_files = [await shark.search.get_packages(path, account, repo) for path, repo in zip(paths, repo_queue)]
     
-    rmtree(tmp)
+    #rmtree(tmp)
 
     async with sem:
         newlist = await shark.npm.find_package_json(copy_dir)
+    
+    package_list = list(set(newlist + shark.npm.read_npm_search_csv(copy_dir)))
+    print(package_list)
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
