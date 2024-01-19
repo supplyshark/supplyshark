@@ -10,6 +10,7 @@ import aiohttp
 import asyncio
 import pygit2
 from . import search
+from shutil import rmtree
 
 def gh_get_user(user):
     try:
@@ -92,7 +93,18 @@ async def gh_clone_repo(user, repo, token):
     auth_method = 'x-access-token'
     try:
         callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(auth_method, token))
-        await pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
+
+        async def clone_repo():
+            pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
+        
+        async def search_repo():
+            await search.get_packages(path, user, repo)
+
+        clone_task = asyncio.ensure_future(clone_repo())
+        await asyncio.wait([clone_task])
+        search_task = asyncio.ensure_future(search_repo())
+        await asyncio.wait([search_task])
+        await rmtree(path)
     except:
         pass
     return path

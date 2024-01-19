@@ -2,7 +2,6 @@ from pathlib import Path
 from sys import exit
 import asyncio
 import shark
-from shutil import rmtree
 import csv
 
 async def start(subscription, settings):
@@ -44,15 +43,10 @@ async def start(subscription, settings):
     
     async with sem:
         gh_download = [paths.append(await shark.github.gh_clone_repo(account, repo, token)) for repo in repo_queue]
-    
+
     with open(f"{copy_dir}/npm_search.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(['file', 'line', 'match'])
-
-    async with sem:
-        search_files = [await shark.search.get_packages(path, account, repo) for path, repo in zip(paths, repo_queue)]
-    
-    #rmtree(tmp)
 
     async with sem:
         newlist = await shark.npm.find_package_json(copy_dir)

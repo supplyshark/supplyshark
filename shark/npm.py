@@ -6,11 +6,7 @@ import asyncio
 import aiofiles
 from pathlib import Path
 from collections import defaultdict
-import re
-from typing import List
 import csv
-from aiopath import AsyncPath
-
 
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
