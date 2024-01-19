@@ -108,15 +108,14 @@ async def start(settings):
     forked = settings['forked']
     archived = settings['archived']
 
-    '''
     tmp = f"/tmp/.supplyshark/{account}"
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        gh_download = [executor.submit(shark.github.gh_clone_repo, account, repo) for repo in repos]
+        gh_download = [executor.submit(shark.github.gh_clone_repo, account, repo, token) for repo in repos]
         for task in concurrent.futures.as_completed(gh_download):
-            await task
-    '''
+            available_task = asyncio.wrap_future(task)
+            await available_task
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

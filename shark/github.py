@@ -2,13 +2,13 @@ from dotenv import load_dotenv
 from github import Github, Auth
 from gitlab import Gitlab
 from pathlib import Path
-from pygit2 import clone_repository
 from os import getenv
 import re
 import jwt
 import time
 import aiohttp
 import asyncio
+import pygit2
 
 def gh_get_user(user):
     try:
@@ -65,10 +65,12 @@ async def get_access_token(id):
     
     return data['token']    
 
-async def gh_clone_repo(user, repo):
+def gh_clone_repo(user, repo, token):
     path = f"/tmp/.supplyshark/{user}/{repo}"
+    auth_method = 'x-access-token'
     try:
-        clone_repository(f"git://github.com/{user}/{repo}.git", path)
+        callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(auth_method, token))
+        pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
     except:
         pass
     return path
@@ -77,7 +79,7 @@ def gl_clone_repo(repo, url):
     name = repo.split(f"{url}")[1].split(".git")[0]
     path = f"/tmp/.supplyshark/{name}"
     Path(path).mkdir(parents=True, exist_ok=True)
-    clone_repository(repo, path)
+    pygit2.clone_repository(repo, path)
     return path
 
 def gh_available(value):
