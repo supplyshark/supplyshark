@@ -27,7 +27,7 @@ def read_npm_search_json(path: str) -> list:
     with open(f"{path}/npm_search.json", 'r', encoding='utf-8') as f:
         for line in f:
             match_dict = json.loads(line.strip())
-            matches[match_dict['match']].add((match_dict['filepath'], match_dict['line_number']))
+            matches[match_dict['match']]
 
     matches_list = list(matches.keys())
     return clean.search(matches_list)
