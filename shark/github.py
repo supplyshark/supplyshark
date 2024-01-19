@@ -5,6 +5,10 @@ from pathlib import Path
 from pygit2 import clone_repository
 from os import getenv
 import re
+import jwt
+import time
+import aiohttp
+import asyncio
 
 def gh_get_user(user):
     try:
@@ -34,7 +38,34 @@ def gh_get_repos(user):
     repos = gh_get_user(user).get_repos()
     return list(map(lambda x: x.name, filter(lambda x: not x.fork and not x.archived, repos)))
 
-def gh_clone_repo(user, repo):
+async def get_access_token(id):
+    load_dotenv()
+    with open(getenv("PEM_FILE"), 'rb') as pem_file:
+        signing_key = jwt.jwk_from_pem(pem_file.read())
+
+    payload = {
+        'iat': int(time.time()),
+        'exp': int(time.time() + 600),
+        'iss': getenv("APP_ID")
+    }
+
+    jwt_instance = jwt.JWT()
+    encoded_jwt = jwt_instance.encode(payload, signing_key, alg='RS256')
+
+    header = {
+        'Authorization': f"Bearer {encoded_jwt}",
+        'Accept': 'application/vnd.github+json'
+    }
+
+    url = f"https://api.github.com/app/installations/{id}/access_tokens"
+
+    async with aiohttp.ClientSession(headers=header) as session:
+        async with session.post(url) as resp:
+            data = await resp.json()
+    
+    return data['token']    
+
+async def gh_clone_repo(user, repo):
     path = f"/tmp/.supplyshark/{user}/{repo}"
     try:
         clone_repository(f"git://github.com/{user}/{repo}.git", path)

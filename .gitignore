@@ -1,7 +1,7 @@
 # Results files generated from SupplyShark
 results/*.txt
 lists/*.txt
-gl.py
+supplyshark.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

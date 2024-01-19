@@ -1,7 +1,8 @@
-from argparse import ArgumentParser
 from pathlib import Path
 from threading import Thread
 from sys import exit
+import argparse
+import asyncio
 import concurrent.futures
 import multiprocessing
 import shark
@@ -75,7 +76,7 @@ def run_file(file, output, gitlab, url):
                 pass
 
 def old_main():
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument("-u", type=str)
     parser.add_argument("-o", type=str, required=True)
     parser.add_argument("-L", type=str)
@@ -98,22 +99,24 @@ def old_main():
     else:
         run(args.u, args.o, args.gitlab, args.url)
 
-def start(uid):
-    settings = shark.db.fetch_user_app_settings(uid)
-    sub = shark.db.get_subscription_name(uid)
-
+async def start(settings):
     id = settings['installation_id']
+    token = await shark.github.get_access_token(id)
+
     account = settings['account_name']
     repos = settings['repositories']
     forked = settings['forked']
     archived = settings['archived']
 
+    '''
     tmp = f"/tmp/.supplyshark/{account}"
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         gh_download = [executor.submit(shark.github.gh_clone_repo, account, repo) for repo in repos]
-        concurrent.futures.wait(gh_download)
+        for task in concurrent.futures.as_completed(gh_download):
+            await task
+    '''
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
@@ -123,4 +126,10 @@ if __name__ == "__main__":
 
     for uid in runs:
         if shark.db.is_active(uid):
-            start(uid)
+            settings = shark.db.fetch_user_app_settings(uid)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                asyncio.run(start(settings))
+            except KeyboardInterrupt:
+                pass
