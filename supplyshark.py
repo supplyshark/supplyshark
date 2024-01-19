@@ -17,11 +17,12 @@ async def start(subscription, settings):
     Path(tmp, copy_dir).mkdir(parents=True, exist_ok=True)
 
     sem = asyncio.Semaphore(10)
+    super_sem = asyncio.Semaphore(50)
     repo_queue = []
     paths = []
 
     async with sem:
-        gh_check = [await shark.github.check_github_repo(token, account, repo) for repo in repos]
+        gh_check = await asyncio.gather(*[shark.github.check_github_repo(token, account, repo) for repo in repos])
 
     for repo, _is in zip(repos, gh_check):
         if subscription != "premium":
@@ -47,7 +48,9 @@ async def start(subscription, settings):
         newlist = await shark.npm.find_package_json(copy_dir)
 
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
-    print(package_list)
+    
+    async with super_sem:
+        await asyncio.gather(*[shark.npm.scan_packages(package) for package in package_list])
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

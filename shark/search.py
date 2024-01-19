@@ -34,7 +34,6 @@ async def npm_install_files(path, username):
                 break
             line = line.decode('utf-8')
             filepath, line_number, match = line.split(":")
-            #await writer.writerow([filepath, line_number, match.replace('\n', '')])
             await f.write(json.dumps({
                 "filepath": filepath,
                 "line_number": line_number,

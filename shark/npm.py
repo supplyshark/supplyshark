@@ -6,6 +6,7 @@ import asyncio
 import aiofiles
 from pathlib import Path
 from collections import defaultdict
+import shlex
 
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
@@ -31,6 +32,13 @@ def read_npm_search_json(path: str) -> list:
 
     matches_list = list(matches.keys())
     return clean.search(matches_list)
+
+async def scan_packages(package):
+    command = f"npm view '{package}'"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    resp = await process.stderr.read()
+    if "is not in this registry" in resp.decode('utf-8'):
+        print(package)
 
 def scope_available(scope):
     stdout = getoutput(f"npm search '{scope}'")
