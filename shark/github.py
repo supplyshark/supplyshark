@@ -9,6 +9,7 @@ import time
 import aiohttp
 import asyncio
 import pygit2
+from . import search
 
 def gh_get_user(user):
     try:
@@ -91,7 +92,7 @@ async def gh_clone_repo(user, repo, token):
     auth_method = 'x-access-token'
     try:
         callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(auth_method, token))
-        pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
+        await pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
     except:
         pass
     return path

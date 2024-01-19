@@ -2,6 +2,7 @@ from pathlib import Path
 from sys import exit
 import asyncio
 import shark
+from shutil import rmtree
 
 async def start(subscription, settings):
     id = settings['installation_id']
@@ -13,7 +14,8 @@ async def start(subscription, settings):
     archived = settings['archived']
 
     tmp = f"/tmp/.supplyshark/{account}"
-    Path(tmp).mkdir(parents=True, exist_ok=True)
+    copy_dir = f"/tmp/.supplyshark/_output/{account}"
+    Path(tmp, copy_dir).mkdir(parents=True, exist_ok=True)
 
     sem = asyncio.Semaphore(10)
     repo_queue = []
@@ -41,6 +43,11 @@ async def start(subscription, settings):
     
     async with sem:
         gh_download = [paths.append(await shark.github.gh_clone_repo(account, repo, token)) for repo in repo_queue]
+    
+    async with sem:
+        search_files = [await shark.search.get_packages(path, account, repo) for path, repo in zip(paths, repo_queue)]
+    
+    rmtree(tmp)
             
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
