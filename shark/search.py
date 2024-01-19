@@ -6,8 +6,6 @@ import aiofiles
 import shlex
 import pathlib
 import json
-from collections import defaultdict
-import csv
 
 async def get_packages(path, username, repo):
     func_args_list = [
@@ -27,17 +25,21 @@ async def get_packages(path, username, repo):
 async def npm_install_files(path, username):
     command = f"rg -e 'yarn add|npm install|pnpm install' --no-heading -n {path}"
     output_path = f"/tmp/.supplyshark/_output/{username}"
-    output_file = f"{output_path}/npm_search.csv"
+    output_file = f"{output_path}/npm_search.json"
     process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE)
     async with aiofiles.open(output_file, 'a') as f:
-        writer = csv.writer(f)
         while True:
             line = await process.stdout.readline()
             if line == b'':
                 break
             line = line.decode('utf-8')
             filepath, line_number, match = line.split(":")
-            await writer.writerow([filepath, line_number, match.replace('\n', '')])
+            #await writer.writerow([filepath, line_number, match.replace('\n', '')])
+            await f.write(json.dumps({
+                "filepath": filepath,
+                "line_number": line_number,
+                "match": match.replace('\n', '')
+            }) + '\n')
 
 async def pip_install_files(path, username):
     command = f"rg -e 'pip install|poetry install|pip3 install' --no-heading --json {path}"

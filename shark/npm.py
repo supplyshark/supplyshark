@@ -6,7 +6,6 @@ import asyncio
 import aiofiles
 from pathlib import Path
 from collections import defaultdict
-import csv
 
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
@@ -22,13 +21,13 @@ async def find_package_json(directory: str) -> list:
     await asyncio.gather(*tasks)
     return list(packages['dependencies'].union(packages['devDependencies']))
 
-def read_npm_search_csv(path: str) -> list:
+def read_npm_search_json(path: str) -> list:
     matches = defaultdict(set)
 
-    with open(f"{path}/npm_search.csv", 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            matches[row['match']]
+    with open(f"{path}/npm_search.json", 'r', encoding='utf-8') as f:
+        for line in f:
+            match_dict = json.loads(line.strip())
+            matches[match_dict['match']].add((match_dict['filepath'], match_dict['line_number']))
 
     matches_list = list(matches.keys())
     return clean.search(matches_list)
