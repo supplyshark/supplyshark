@@ -65,7 +65,7 @@ async def get_access_token(id):
     
     return data['token']
 
-async def check_github_repo(token, forked, archived, account, repo):
+async def check_github_repo(token, account, repo):
     url = f"https://api.github.com/repos/{account}/{repo}"
     header = {
         'Accept': 'application/vnd.github+json',
@@ -77,12 +77,14 @@ async def check_github_repo(token, forked, archived, account, repo):
         async with session.get(url) as resp:
             data = await resp.json()
     
-    repo_name = data['name']
-    repo_private = data['private']
-    repo_forked = data['fork']
-    repo_archived = data['archived']
+    repo_info = {
+        'repo_name': data['name'],
+        'repo_private': data['private'],
+        'repo_forked': data['fork'],
+        'repo_archived': data['archived']
+    }
 
-    print(repo_name, repo_private, repo_forked, repo_archived)
+    return repo_info
 
 def gh_clone_repo(user, repo, token):
     path = f"/tmp/.supplyshark/{user}/{repo}"

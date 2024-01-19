@@ -98,7 +98,7 @@ def old_main():
     else:
         run(args.u, args.o, args.gitlab, args.url)
 
-async def start(settings):
+async def start(subscription, settings):
     id = settings['installation_id']
     token = await shark.github.get_access_token(id)
 
@@ -111,12 +111,31 @@ async def start(settings):
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
     sem = asyncio.Semaphore(10)
+    repo_queue = []
 
     async with sem:
-        gh_check = [await shark.github.check_github_repo(token, forked, archived, account, repo) for repo in repos]
+        gh_check = [await shark.github.check_github_repo(token, account, repo) for repo in repos]
 
+    for repo, _is in zip(repos, gh_check):
+        print(_is)
+        if subscription != "premium":
+            if not _is['repo_private'] and not _is['repo_archived'] and not _is['repo_forked']:
+                repo_queue.append(repo)
+        else:
+            if forked and archived:
+                repo_queue.append(repo)
+            elif not forked and not archived:
+                if not _is['repo_forked'] and not _is['repo_archived']:
+                    repo_queue.append(repo)
+            elif forked and not archived:
+                if _is['repo_forked'] and not _is['repo_archived']:
+                    repo_queue.append(repo)
+            elif not forked and archived:
+                if not _is['repo_forked'] and _is['repo_archived']:
+                    repo_queue.append(repo)
+    
     async with sem:
-        gh_download = [shark.github.gh_clone_repo(account, repo, token) for repo in repos]
+        gh_download = [shark.github.gh_clone_repo(account, repo, token) for repo in repo_queue]
             
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
@@ -127,9 +146,10 @@ if __name__ == "__main__":
     for uid in runs:
         if shark.db.is_active(uid):
             settings = shark.db.fetch_user_app_settings(uid)
+            subscription = shark.db.get_subscription_name(uid)
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                asyncio.run(start(settings))
+                asyncio.run(start(subscription, settings))
             except KeyboardInterrupt:
                 pass
