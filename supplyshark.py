@@ -17,12 +17,12 @@ async def start(subscription, settings):
 
     sem = asyncio.Semaphore(10)
     repo_queue = []
+    paths = []
 
     async with sem:
         gh_check = [await shark.github.check_github_repo(token, account, repo) for repo in repos]
 
     for repo, _is in zip(repos, gh_check):
-        print(_is)
         if subscription != "premium":
             if not _is['repo_private'] and not _is['repo_archived'] and not _is['repo_forked']:
                 repo_queue.append(repo)
@@ -33,14 +33,14 @@ async def start(subscription, settings):
                 if not _is['repo_forked'] and not _is['repo_archived']:
                     repo_queue.append(repo)
             elif forked and not archived:
-                if _is['repo_forked'] and not _is['repo_archived']:
+                if not _is['repo_archived']:
                     repo_queue.append(repo)
             elif not forked and archived:
-                if not _is['repo_forked'] and _is['repo_archived']:
+                if not _is['repo_forked']:
                     repo_queue.append(repo)
     
     async with sem:
-        gh_download = [shark.github.gh_clone_repo(account, repo, token) for repo in repo_queue]
+        gh_download = [paths.append(await shark.github.gh_clone_repo(account, repo, token)) for repo in repo_queue]
             
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

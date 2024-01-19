@@ -86,7 +86,7 @@ async def check_github_repo(token, account, repo):
 
     return repo_info
 
-def gh_clone_repo(user, repo, token):
+async def gh_clone_repo(user, repo, token):
     path = f"/tmp/.supplyshark/{user}/{repo}"
     auth_method = 'x-access-token'
     try:
@@ -94,6 +94,7 @@ def gh_clone_repo(user, repo, token):
         pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
     except:
         pass
+    return path
 
 def gl_clone_repo(repo, url):
     name = repo.split(f"{url}")[1].split(".git")[0]
