@@ -7,6 +7,7 @@ import aiofiles
 from pathlib import Path
 from collections import defaultdict
 import shlex
+import aiohttp
 
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
@@ -35,57 +36,32 @@ def read_npm_search_json(path: str) -> list:
 
 async def scan_packages(package):
     command = f"npm view '{package}'"
-    process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                   stdout=asyncio.subprocess.PIPE,
+                                                   stderr=asyncio.subprocess.PIPE)
     resp = await process.stderr.read()
     if "is not in this registry" in resp.decode('utf-8'):
         print(package)
 
-def scope_available(scope):
-    stdout = getoutput(f"npm search '{scope}'")
-    if "No matches found" in stdout:
-        return True
-    else:
-        return False
+async def scope_available(scope):
+    command = f"npm search '{scope}'"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                   stdout=asyncio.subprocess.PIPE,
+                                                   stderr=asyncio.subprocess.PIPE)
+    resp = await process.stdout.read()
+    if "No matches found" in resp.decode('utf-8'):
+        await scope_404(scope)
 
-def scope_404(scope):
-    r = get(f"https://npmjs.com/~{scope}")
-    if "NotFoundError: Scope not found" in r.text:
-        return True
-    else:
-        return False
+async def scope_404(scope):
+    url = f'https://npmjs.com/~{scope.split('@')[1]}'
 
-def npm_available(package):
-    stdout = getoutput(f"npm view '{package}'")
-    if "is not in this registry" in stdout:
-        return True
-    else:
-        return False
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 404:
+                print(scope)
 
-def get_packages(path):
-    packages = []
-    for p in ["npm", "yarn", "pnpm"]:
-        if p == "yarn":
-            packages += search.yarn(path)
-        else:
-            args = ["", "-g", "--save"]
-            packages += search.install(p, path, args)
-    return list(set(packages))
 
-def npm_scope(package, user, repo, output, gitlab):
-    scope = package.split("/")[0]
-    if scope_available(scope) and scope_404(scope.split("@")[1]):
-        file.out(f"[npm] [{user}/{repo}] {package}", output)
-        url = github.get_url(user, repo, gitlab)
-        #db.write_results(package, 1, user, repo, url)
-
-def run(package, user, repo, output, gitlab):
-    if package.startswith("@"):
-        npm_scope(package, user, repo, output, gitlab)
-    elif npm_available(package):
-        file.out(f"[npm] [{user}/{repo}] {package}", output)
-        url = github.get_url(user, repo, gitlab)
-        #db.write_results(package, 1, user, repo, url)
-    
+''''   
 def find_npmfile(data, key, matches, user, repo, output, gitlab):
     for k, v in data[key].items():
         if not any(x in v for x in matches):
@@ -112,11 +88,4 @@ def get_npmfile(npmfile, user, repo, output, gitlab):
         for key in ["dependencies", "devDependencies"]:
             if key in data:
                 find_npmfile(data, key, matches, user, repo, output, gitlab)
-
-def main(path, user, repo, output, gitlab):
-    packages = get_packages(path)
-    for p in packages:
-        run(p, user, repo, output, gitlab)   
-    
-    for npmfile in search.files(path, "package.json"):
-        get_npmfile(npmfile, user, repo, output, gitlab)
+'''

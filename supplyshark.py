@@ -50,7 +50,12 @@ async def start(subscription, settings):
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
     
     async with super_sem:
-        await asyncio.gather(*[shark.npm.scan_packages(package) for package in package_list])
+        await asyncio.gather(*[shark.npm.scan_packages(package) for package in package_list if not package.startswith("@")])
+
+    scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
+
+    async with super_sem:
+        await asyncio.gather(*[shark.npm.scope_available(scope) for scope in scope_list])
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

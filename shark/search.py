@@ -41,26 +41,40 @@ async def npm_install_files(path, username):
             }) + '\n')
 
 async def pip_install_files(path, username):
-    command = f"rg -e 'pip install|poetry install|pip3 install' --no-heading --json {path}"
-    output_file = f"/tmp/.supplyshark/_output/{username}/pip_search.json"
+    command = f"rg -e 'pip install|poetry install|pip3 install' --no-heading -n {path}"
+    output_path = f"/tmp/.supplyshark/_output/{username}"
+    output_file = f"{output_path}/pip_search.json"
     process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE)
     async with aiofiles.open(output_file, 'a') as f:
         while True:
             line = await process.stdout.readline()
             if line == b'':
                 break
-            await f.write(line.decode('utf-8'))
+            line = line.decode('utf-8')
+            filepath, line_number, match = line.split(":")
+            await f.write(json.dumps({
+                "filepath": filepath,
+                "line_number": line_number,
+                "match": match.replace('\n', '')
+            }) + '\n')
 
 async def gem_install_files(path, username):
-    command = f'rg "gem i |gem \'|gem install|gem \\\"" --no-heading --json {path}'
-    output_file = f"/tmp/.supplyshark/_output/{username}/gem_search.json"
+    command = f'rg "gem i |gem \'|gem install|gem \\\"" --no-heading -n {path}'
+    output_path = f"/tmp/.supplyshark/_output/{username}"
+    output_file = f"{output_path}/gem_search.json"
     process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE)
     async with aiofiles.open(output_file, 'a') as f:
         while True:
             line = await process.stdout.readline()
             if line == b'':
                 break
-            await f.write(line.decode('utf-8'))
+            line = line.decode('utf-8')
+            filepath, line_number, match = line.split(":")
+            await f.write(json.dumps({
+                "filepath": filepath,
+                "line_number": line_number,
+                "match": match.replace('\n', '')
+            }) + '\n')
 
 async def copy_files(path, username, repo, filename):
     file_paths = []
@@ -82,18 +96,6 @@ async def copy_files(path, username, repo, filename):
             await output_file.write(data)
 
 
-
-def install(package, path, args):
-    packages = []
-    for arg in args:
-        stdout = getoutput(f"grep -r --exclude-dir=node_modules '{package} install {arg}' {path}")
-        pattern = re.compile(r"{package}\s+install\s+{arg}(.*)".format(package=package, arg=arg))
-        result = pattern.findall(stdout)
-        for r in result:
-            if clean.check(r):
-                packages += [clean.package(r)]
-    return list(set(packages))
-
 def gems(path):
     gems = []
     for a in ["install ", "i ", '\\\"', '\'']:
@@ -103,22 +105,3 @@ def gems(path):
         for gem in result:
             gems += [clean.package_gem(gem)]
     return list(set(gems))
-
-def yarn(path):
-    packages = []
-    for a in ["", "-D"]:
-        stdout = getoutput(f"grep -r --exclude-dir=node_modules --exclude=yarn-error.log 'yarn add {a}' {path}")
-        pattern = re.compile(r"yarn\s+add\s+{a}(.*)".format(a=a))
-        result = pattern.findall(stdout)
-        for r in result:
-            if clean.check(r):
-                packages += [clean.package(r)]
-
-    return list(set(packages))
-
-def files(path, file):
-    files = []
-    for f in pathlib.Path(path).rglob(file):
-        if "node_modules" not in str(f):
-            files += [f]
-    return files
