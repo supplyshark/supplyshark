@@ -3,7 +3,6 @@ from threading import Thread
 from sys import exit
 import argparse
 import asyncio
-import concurrent.futures
 import multiprocessing
 import shark
 
@@ -111,12 +110,14 @@ async def start(settings):
     tmp = f"/tmp/.supplyshark/{account}"
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        gh_download = [executor.submit(shark.github.gh_clone_repo, account, repo, token) for repo in repos]
-        for task in concurrent.futures.as_completed(gh_download):
-            available_task = asyncio.wrap_future(task)
-            await available_task
+    sem = asyncio.Semaphore(10)
 
+    async with sem:
+        gh_check = [await shark.github.check_github_repo(token, forked, archived, account, repo) for repo in repos]
+
+    async with sem:
+        gh_download = [shark.github.gh_clone_repo(account, repo, token) for repo in repos]
+            
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
     if len(runs) == 0:

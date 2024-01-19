@@ -63,7 +63,26 @@ async def get_access_token(id):
         async with session.post(url) as resp:
             data = await resp.json()
     
-    return data['token']    
+    return data['token']
+
+async def check_github_repo(token, forked, archived, account, repo):
+    url = f"https://api.github.com/repos/{account}/{repo}"
+    header = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f"Bearer {token}",
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+
+    async with aiohttp.ClientSession(headers=header) as session:
+        async with session.get(url) as resp:
+            data = await resp.json()
+    
+    repo_name = data['name']
+    repo_private = data['private']
+    repo_forked = data['fork']
+    repo_archived = data['archived']
+
+    print(repo_name, repo_private, repo_forked, repo_archived)
 
 def gh_clone_repo(user, repo, token):
     path = f"/tmp/.supplyshark/{user}/{repo}"
@@ -73,7 +92,6 @@ def gh_clone_repo(user, repo, token):
         pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
     except:
         pass
-    return path
 
 def gl_clone_repo(repo, url):
     name = repo.split(f"{url}")[1].split(".git")[0]
