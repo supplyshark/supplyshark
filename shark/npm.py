@@ -7,7 +7,7 @@ import aiohttp
 import asyncio
 import shlex
 
-async def process_results(path, git_results):
+async def process_results_git(path, git_results):
     json_data = [await search.package_json_results(path, value['value']) for _, value in git_results.items()]
 
     new_json_data = []
@@ -18,10 +18,14 @@ async def process_results(path, git_results):
 
             entry['package'] = matching_key
             entry['user'] = git_results[matching_key]['user']
+            entry['vulnerability'] = "npm package pulling from GitHub source where the username is available to be registered."
+            entry['type'] = "npm github"
 
             new_json_data.append(entry)
 
-    print(json.dumps(new_json_data, indent=2))
+    return new_json_data
+
+#async def process_results_package(path, package_results):
 
 
 async def find_package_json(directory: str) -> list:
@@ -116,14 +120,22 @@ async def scan_packages(package):
     if "is not in this registry" in resp.decode('utf-8'):
         print(package)
 
-async def scope_available(scope):
+async def scope_available(path, scope):
     command = f"npm search '{scope}'"
     process = await asyncio.create_subprocess_exec(*shlex.split(command),
                                                    stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE)
     resp = await process.stdout.read()
+
+    results = []
+
     if "No matches found" in resp.decode('utf-8'):
-        await scope_404(scope)
+        if await scope_404(scope):
+            data = await search.package_json_results(path, scope)
+            results.append(json.loads(data))
+            search_data = await search.package_search_json_results(f"{path}/npm_search.json", scope)
+            results.extend(search_data)
+    return results
 
 async def scope_404(scope):
     url = f'https://npmjs.com/~{scope.split('@')[1]}'
@@ -131,4 +143,6 @@ async def scope_404(scope):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status == 404:
-                print(scope)
+                return True
+            else:
+                return False

@@ -24,6 +24,11 @@ async def npm(copy_dir, sem, super_sem):
             for scope in scope_list
         ])
 
+    async with sem:
+        results = await shark.npm.scan_package_values(copy_dir)
+
+    await shark.npm.process_results_git(copy_dir, results)
+
 
 async def gem(copy_dir, super_sem):
     gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
@@ -103,9 +108,17 @@ async def start(subscription, settings):
     '''
 
     async with sem:
-        results = await shark.npm.scan_package_values(copy_dir)
+        newlist = await shark.npm.find_package_json(copy_dir)
 
-    await shark.npm.process_results(copy_dir, results)
+    package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
+
+    scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
+
+    async with super_sem:
+        results = await asyncio.gather(*[shark.npm.scope_available(copy_dir, scope) for scope in scope_list])
+        results = [result for result in results if result is not None and result]
+
+    print(results)
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
