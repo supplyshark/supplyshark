@@ -29,7 +29,7 @@ async def process_results_git(path, git_results):
             for entry in item_dict:
                 matching_key = list(filter(lambda x: x[0] == entry['value'], git_results.items()))[0][0]
 
-                entry['package'] = matching_key
+                entry['package'] = matching_key.split(" ")[0]
                 entry['user'] = git_results[matching_key]['user']
 
             new_json_data.append(entry)
