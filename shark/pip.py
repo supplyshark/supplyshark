@@ -1,11 +1,10 @@
-from . import clean, db, file, github, search
-from subprocess import getoutput
-import asyncio
+from . import clean, search
 from collections import defaultdict
-import json
-import shlex
 from pathlib import Path
 import aiofiles
+import asyncio
+import json
+import shlex
 
 async def find_requirements_txt(directory: Path) -> list[str]:
     lines = []

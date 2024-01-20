@@ -1,12 +1,13 @@
-from . import db, file, github, search, clean
-from requests import get
-from subprocess import getoutput
-import re
-import asyncio
-import shlex
+from . import search, clean
 from collections import defaultdict
-import json
 import aiohttp
+import asyncio
+import json
+import re
+import shlex
+
+
+
 
 def read_gem_search_json(path: str) -> list:
     matches = defaultdict(set)

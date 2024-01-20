@@ -125,8 +125,8 @@ async def start(subscription, settings):
         paths.extend(gh_download)
 
     await asyncio.gather(
-        #npm(copy_dir, sem, super_sem)
-        #gem(copy_dir, super_sem)
+        npm(copy_dir, sem, super_sem),
+        gem(copy_dir, super_sem),
         pip(copy_dir, sem, super_sem)
     )
     
