@@ -3,6 +3,50 @@ from sys import exit
 import asyncio
 import shark
 
+
+async def npm(copy_dir, sem, super_sem):
+    async with sem:
+        newlist = await shark.npm.find_package_json(copy_dir)
+
+    package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
+
+    async with super_sem:
+        await asyncio.gather(*[
+            shark.npm.scan_packages(package)
+            for package in package_list
+            if not package.startswith("@")
+        ])
+
+    scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
+
+    async with super_sem:
+        await asyncio.gather(*[
+            shark.npm.scope_available(scope)
+            for scope in scope_list
+        ])
+
+
+async def gem(copy_dir, super_sem):
+    gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
+
+    async with super_sem:
+        await asyncio.gather(*[
+            shark.gem.scan_gems(gem)
+            for gem in gem_list
+        ])
+
+async def pip(copy_dir, sem, super_sem):
+    async with sem:
+        piplist = await shark.pip.find_requirements_txt(copy_dir)
+
+    pip_list = list(set(piplist + shark.pip.read_pip_search_json(copy_dir)))
+
+    async with super_sem:
+        await asyncio.gather(*[
+            shark.pip.scan_packages(package)
+            for package in pip_list
+        ])
+
 async def start(subscription, settings):
     id = settings['installation_id']
     token = await shark.github.get_access_token(id)
@@ -22,7 +66,10 @@ async def start(subscription, settings):
     paths = []
 
     async with sem:
-        gh_check = await asyncio.gather(*[shark.github.check_github_repo(token, account, repo) for repo in repos])
+        gh_check = await asyncio.gather(*[
+            shark.github.check_github_repo(token, account, repo)
+            for repo in repos
+        ])
 
     for repo, _is in zip(repos, gh_check):
         if subscription != "premium":
@@ -40,45 +87,23 @@ async def start(subscription, settings):
             elif not forked and archived:
                 if not _is['repo_forked']:
                     repo_queue.append(repo)
-    
+
     async with sem:
         gh_download = await asyncio.gather(*[
-            shark.github.gh_clone_repo(account, repo, token) for repo in repo_queue
+            shark.github.gh_clone_repo(account, repo, token)
+            for repo in repo_queue
         ])
         paths.extend(gh_download)
 
-    # NPM Functions
-    async with sem:
-        newlist = await shark.npm.find_package_json(copy_dir)
-
-    package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
-    
-    async with super_sem:
-        await asyncio.gather(*[shark.npm.scan_packages(package) for package in package_list if not package.startswith("@")])
-
-    scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
-
-    async with super_sem:
-        await asyncio.gather(*[shark.npm.scope_available(scope) for scope in scope_list])
-    
-    # GEM Functions
-    gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
-    
-    async with super_sem:
-        await asyncio.gather(*[shark.gem.scan_gems(gem) for gem in gem_list])
-
-    # PIP Functions
-    async with sem:
-        piplist = await shark.pip.find_requirements_txt(copy_dir)
-
-    pip_list = list(set(piplist + shark.pip.read_pip_search_json(copy_dir)))
-    
-    async with super_sem:
-        await asyncio.gather(*[shark.pip.scan_packages(package) for package in pip_list])
+    await asyncio.gather(
+        npm(copy_dir, sem, super_sem),
+        gem(copy_dir, super_sem),
+        pip(copy_dir, sem, super_sem)
+    )
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
-    if len(runs) == 0:
+    if not runs:
         print("No scheduled runs today.")
         exit(0)
 
