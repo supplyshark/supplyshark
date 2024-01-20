@@ -10,24 +10,32 @@ async def npm(copy_dir, sem, super_sem):
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
 
     async with super_sem:
-        await asyncio.gather(*[
-            shark.npm.scan_packages(package)
+        package_results = await asyncio.gather(*[
+            shark.npm.scan_packages(copy_dir, package)
             for package in package_list
             if not package.startswith("@")
         ])
+        package_results = [result for result in package_results if result is not None and result]
 
     scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
 
     async with super_sem:
-        await asyncio.gather(*[
-            shark.npm.scope_available(scope)
+        scope_results = await asyncio.gather(*[
+            shark.npm.scope_available(copy_dir, scope)
             for scope in scope_list
         ])
+        scope_results = [result for result in scope_results if result is not None and result]
 
     async with sem:
-        results = await shark.npm.scan_package_values(copy_dir)
+        git_results = await shark.npm.scan_package_values(copy_dir)
 
-    await shark.npm.process_results_git(copy_dir, results)
+    await shark.npm.process_results_git(copy_dir, git_results)
+
+    combined_results = {
+        "package_results": package_results,
+        "scope_results": scope_results,
+        "git_results": git_results
+    }
 
 
 async def gem(copy_dir, super_sem):
@@ -99,26 +107,12 @@ async def start(subscription, settings):
         ])
         paths.extend(gh_download)
 
-    '''
     await asyncio.gather(
-        npm(copy_dir, sem, super_sem),
-        gem(copy_dir, super_sem),
-        pip(copy_dir, sem, super_sem)
+        npm(copy_dir, sem, super_sem)
+        #gem(copy_dir, super_sem),
+        #pip(copy_dir, sem, super_sem)
     )
-    '''
-
-    async with sem:
-        newlist = await shark.npm.find_package_json(copy_dir)
-
-    package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
-
-    scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
-
-    async with super_sem:
-        results = await asyncio.gather(*[shark.npm.scope_available(copy_dir, scope) for scope in scope_list])
-        results = [result for result in results if result is not None and result]
-
-    print(results)
+    
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

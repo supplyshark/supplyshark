@@ -111,14 +111,21 @@ def read_npm_search_json(path: str) -> list:
     matches_list = list(matches.keys())
     return clean.search(matches_list)
 
-async def scan_packages(package):
+async def scan_packages(path, package):
     command = f"npm view '{package}'"
     process = await asyncio.create_subprocess_exec(*shlex.split(command),
                                                    stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE)
     resp = await process.stderr.read()
+
+    results = []
+
     if "is not in this registry" in resp.decode('utf-8'):
-        print(package)
+        data = await search.package_json_results(path, package)
+        results.append(json.loads(data))
+        search_data = await search.package_search_json_results(f"{path}/npm_search.json", package)
+        results.extend(search_data)
+    return results
 
 async def scope_available(path, scope):
     command = f"npm search '{scope}'"
