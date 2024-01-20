@@ -11,7 +11,7 @@ async def npm(copy_dir, sem, super_sem):
         newlist = await shark.npm.find_package_json(copy_dir)
 
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
-
+    
     async with super_sem:
         package_results = await asyncio.gather(*[
             shark.npm.scan_packages(copy_dir, package)

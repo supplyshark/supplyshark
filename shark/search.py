@@ -30,11 +30,11 @@ async def npm_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath = line.split(":")[0]
+            file_path = line.split(":")[0]
             line_number = line.split(":")[1]
             match = line.split(":")[2]
             await f.write(json.dumps({
-                "filepath": filepath,
+                "file": file_path.split("/tmp/.supplyshark/")[1],
                 "line_number": line_number,
                 "match": match.replace('\n', '')
             }) + '\n')
@@ -50,11 +50,11 @@ async def pip_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath = line.split(":")[0]
+            file_path = line.split(":")[0]
             line_number = line.split(":")[1]
             match = line.split(":")[2]
             await f.write(json.dumps({
-                "filepath": filepath,
+                "file": file_path.split("/tmp/.supplyshark/")[1],
                 "line_number": line_number,
                 "match": match.replace('\n', '')
             }) + '\n')
@@ -70,11 +70,11 @@ async def gem_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath = line.split(":")[0]
+            file_path = line.split(":")[0]
             line_number = line.split(":")[1]
             match = line.split(":")[2]
             await f.write(json.dumps({
-                "filepath": filepath,
+                "file": file_path.split("/tmp/.supplyshark/")[1],
                 "line_number": line_number,
                 "match": match.replace('\n', '')
             }) + '\n')
@@ -109,9 +109,9 @@ async def package_json_results(path, value):
         if line == b'':
             break
         line = line.decode('utf-8')
-        filepath = line.split(":")[0]
+        file_path = line.split(":")[0]
         line_number = line.split(":")[1]
-        results.append({"file": filepath.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
+        results.append({"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
 
     return json.dumps(results)
 
@@ -126,9 +126,9 @@ async def cargo_toml_results(path, value):
         if line == b'':
             break
         line = line.decode('utf-8')
-        filepath = line.split(":")[0]
+        file_path = line.split(":")[0]
         line_number = line.split(":")[1]
-        results.append({"file": filepath.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
+        results.append({"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
 
     return json.dumps(results)
 
@@ -143,9 +143,9 @@ async def go_mod_results(path, value):
         if line == b'':
             break
         line = line.decode('utf-8')
-        filepath = line.split(":")[0]
+        file_path = line.split(":")[0]
         line_number = line.split(":")[1]
-        results.append({"file": filepath.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
+        results.append({"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
 
     return json.dumps(results)
 
