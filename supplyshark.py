@@ -252,10 +252,11 @@ if __name__ == "__main__":
                     results = asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
-                print(get_result_count(results))
+
                 set_next_scan(uid)
-                set_scan_stats(uid, results)
-                shark.results.process_results(uid, results, args.app, '')
+                if results:
+                    set_scan_stats(uid, results)
+                    shark.results.process_results(uid, results, args.app, '')
 
 
     elif args.cli:
@@ -265,5 +266,6 @@ if __name__ == "__main__":
             results = asyncio.run(start_cli(args.u))
         except KeyboardInterrupt:
             pass
-
-        shark.results.process_results('', results, False, args.o)
+        
+        if results:
+            shark.results.process_results('', results, False, args.o)
