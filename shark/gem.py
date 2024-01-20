@@ -6,9 +6,6 @@ import json
 import re
 import shlex
 
-
-
-
 def read_gem_search_json(path: str) -> list:
     matches = defaultdict(set)
 

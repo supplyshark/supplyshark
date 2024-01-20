@@ -1,11 +1,8 @@
-from . import clean
-from subprocess import getoutput
-import re
-import asyncio
 import aiofiles
-import shlex
+import asyncio
 import pathlib
 import json
+import shlex
 
 async def get_packages(path, username, repo):
     func_args_list = [

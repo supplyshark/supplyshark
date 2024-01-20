@@ -1,16 +1,14 @@
+from . import search
 from dotenv import load_dotenv
 from github import Github, Auth
-from gitlab import Gitlab
-from pathlib import Path
 from os import getenv
-import re
-import jwt
-import time
+from shutil import rmtree
 import aiohttp
 import asyncio
+import jwt
 import pygit2
-from . import search
-from shutil import rmtree
+import re
+import time
 
 def gh_get_user(user):
     try:
