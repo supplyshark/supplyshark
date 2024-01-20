@@ -37,6 +37,13 @@ def update_next_scan(organization_id, last_run, next_run):
         "next_run": str(next_run)
     }).eq("organization_id", organization_id).execute()
 
+def insert_scan_stats(organization_id, count):
+    supabase = auth()
+    supabase.table("scans").insert({
+        "organization_id": organization_id,
+        "results": count
+    }).execute()
+
 def today_date():
     date = datetime.now()
     return f"{date.month}-{date.day}-{date.year}"

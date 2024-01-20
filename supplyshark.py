@@ -157,8 +157,7 @@ async def start_app(subscription, settings):
 
     rmtree(copy_dir)
 
-    results = json.dumps(data, indent=2)
-    print(results)
+    return json.dumps(data, indent=2)
 
 async def start_cli(account):
     tmp = f"/tmp/.supplyshark/{account}"
@@ -186,8 +185,7 @@ async def start_cli(account):
 
     rmtree(copy_dir)
 
-    results = json.dumps(data, indent=2)
-    print(results)
+    return json.dumps(data, indent=2)
 
 def set_next_scan(uid):
     frequency = shark.db.get_frequency(uid)
@@ -201,6 +199,27 @@ def set_next_scan(uid):
         next_scan = today + datetime.timedelta(weeks=1)
     
     shark.db.update_next_scan(uid, today, next_scan)
+
+def get_result_count(results):
+    count = 0
+    data = json.loads(results)
+
+    def recursive_lookup(data, key):
+        nonlocal count
+        if isinstance(data, dict):
+            if key in data:
+                count += 1
+            for value in data.values():
+                recursive_lookup(value, key)
+        elif isinstance(data, list):
+            for item in data:
+                recursive_lookup(item, key)
+    recursive_lookup(data, "line_number")
+    return count
+
+def set_scan_stats(uid, results):
+    count = get_result_count(results)
+    shark.db.insert_scan_stats(uid, count)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -223,16 +242,20 @@ if __name__ == "__main__":
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
-                    asyncio.run(start_app(subscription, settings))
+                    results = asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
                 
-                set_next_scan(uid)
+                #set_next_scan(uid)
+                #set_scan_stats(uid, results)
+                print(results)
 
     elif args.cli:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            asyncio.run(start_cli(args.u))
+            results = asyncio.run(start_cli(args.u))
         except KeyboardInterrupt:
             pass
+
+        print(results)
