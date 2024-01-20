@@ -31,8 +31,6 @@ async def process_results_git(path, git_results):
 
                 entry['package'] = matching_key
                 entry['user'] = git_results[matching_key]['user']
-                entry['vulnerability'] = "cargo package pulling from GitHub source where the username is available to be registered."
-                entry['type'] = "cargo github"
 
             new_json_data.append(entry)
 

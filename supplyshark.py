@@ -33,13 +33,13 @@ async def npm(copy_dir, sem, super_sem):
         git_results = await shark.npm.scan_package_values(copy_dir)
         git_results = [result for result in git_results if result is not None and result]
 
-    combined_results = json.dumps({
+    results = {
         "package_results": package_results,
         "scope_results": scope_results,
         "git_results": git_results
-    })
+    }
 
-    print(combined_results)
+    return {"npm_results": results}
 
 
 async def gem(copy_dir, super_sem):
@@ -52,11 +52,11 @@ async def gem(copy_dir, super_sem):
         ])
         package_results = [result for result in package_results if result is not None and result]
     
-    results = json.dumps({
+    results = {
         "package_results": package_results
-    })
+    }
 
-    print(results)
+    return {"gem results": results}
 
 async def pip(copy_dir, sem, super_sem):
     async with sem:
@@ -71,35 +71,35 @@ async def pip(copy_dir, sem, super_sem):
         ])
         package_results = [result for result in package_results if result is not None and result]
     
-    results = json.dumps({
+    results = {
         "package_results": package_results
-    })
+    }
 
-    print(results)
+    return {"pip results": results}
 
 async def cargo(copy_dir, sem):
     async with sem:
         git_results = await shark.cargo.scan_cargo(copy_dir)
         git_results = [result for result in git_results if result is not None and result]
     
-    results = json.dumps({
+    results = {
         "git_results": git_results
-    })
+    }
 
-    print(results)
+    return {"cargo results": results}
 
 async def go(copy_dir, sem):
     async with sem:
         git_results = await shark.go.scan_go(copy_dir)
         git_results = [result for result in git_results if result is not None and result]
     
-    results = json.dumps({
+    results = {
         "git_results": git_results
-    })
+    }
 
-    print(results)
+    return {"go results": results}
 
-async def start(subscription, settings):
+async def start_app(subscription, settings):
     id = settings['installation_id']
     token = await shark.github.get_access_token(id)
 
@@ -147,7 +147,7 @@ async def start(subscription, settings):
         ])
         paths.extend(gh_download)
 
-    await asyncio.gather(
+    data = await asyncio.gather(
         npm(copy_dir, sem, super_sem),
         gem(copy_dir, super_sem),
         pip(copy_dir, sem, super_sem),
@@ -156,6 +156,9 @@ async def start(subscription, settings):
     )
 
     rmtree(copy_dir)
+
+    results = json.dumps(data, indent=2)
+    print(results)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -175,6 +178,6 @@ if __name__ == "__main__":
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
-                    asyncio.run(start(subscription, settings))
+                    asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
