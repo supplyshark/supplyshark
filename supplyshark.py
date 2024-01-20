@@ -227,6 +227,7 @@ if __name__ == "__main__":
     parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
     parser.add_argument("--cli", type=bool, action=argparse.BooleanOptionalAction)
     parser.add_argument("-u", type=str)
+    parser.add_argument("-o", type=str)
     args = parser.parse_args()
 
     if args.app:
@@ -249,7 +250,7 @@ if __name__ == "__main__":
                 print(get_result_count(results))
                 set_next_scan(uid)
                 set_scan_stats(uid, results)
-                shark.results.process_results(uid, results, args.app)
+                shark.results.process_results(uid, results, args.app, '')
 
 
     elif args.cli:
@@ -260,4 +261,4 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             pass
 
-        print(results)
+        shark.results.process_results('', results, False, args.o)

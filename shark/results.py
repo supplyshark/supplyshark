@@ -1,7 +1,7 @@
 from . import db
 import json
 
-def npm_results(npm_data, uid, app):
+def npm_results(npm_data, uid, app, output):
     npm_package_results = npm_data["package_results"]
     npm_scope_results = npm_data["scope_results"]
     npm_git_results = npm_data["git_results"]
@@ -20,7 +20,9 @@ def npm_results(npm_data, uid, app):
                 if app:
                     db.write_results(package, 1, uid, repo_url, bug_url)
                 else:
-                    print(package, "[npm]", repo_url, bug_url)
+                    with open(output, "a") as out:
+                        msg = f"{package} [npm] {repo_url} {bug_url}"
+                        print(msg, file=out)
         except:
             pass
 
@@ -38,7 +40,9 @@ def npm_results(npm_data, uid, app):
                 if app:
                     db.write_results(scope, 2, uid, repo_url, bug_url)
                 else:
-                    print(scope, "[npm scope]", repo_url, bug_url)
+                    with open(output, "a") as out:
+                        msg = f"{scope} [npm scope] {repo_url} {bug_url}"
+                        print(msg, file=out)
         except:
             pass
     
@@ -57,11 +61,13 @@ def npm_results(npm_data, uid, app):
             if app:
                 db.write_results_gh(package, 3, uid, repo_url, bug_url, gh_user, value)
             else:
-                print(package, "[npm github]", gh_user, repo_url, bug_url)
+                with open(output, "a") as out:
+                    msg = f"{package} [npm github] {gh_user} {repo_url} {bug_url}"
+                    print(msg, file=out)
         except:
             pass
 
-def gem_results(gem_data, uid, app):
+def gem_results(gem_data, uid, app, output):
     gem_package_results = gem_data['package_results']
     for package_result in gem_package_results:
         try:
@@ -77,11 +83,13 @@ def gem_results(gem_data, uid, app):
                 if app:
                     db.write_results(package, 4, uid, repo_url, bug_url)
                 else:
-                    print(package, "[gem]", repo_url, bug_url)
+                    with open(output, "a") as out:
+                        msg = f"{package} [gem] {repo_url} {bug_url}"
+                        print(msg, file=out)
         except:
             pass
 
-def pip_results(pip_data, uid, app):
+def pip_results(pip_data, uid, app, output):
     pip_package_results = pip_data['package_results']
     for package_result in pip_package_results:
         try:
@@ -97,11 +105,13 @@ def pip_results(pip_data, uid, app):
                 if app:
                     db.write_results(package, 6, uid, repo_url, bug_url)
                 else:
-                    print(package, "[pip]", repo_url, bug_url)
+                    with open(output, "a") as out:
+                        msg = f"{package} [pip] {repo_url} {bug_url}"
+                        print(msg, file=out)
         except:
             pass
 
-def go_results(go_data, uid, app):
+def go_results(go_data, uid, app, output):
     go_git_results = go_data['git_results']
     for git_result in go_git_results:
         try:
@@ -118,11 +128,13 @@ def go_results(go_data, uid, app):
             if app:
                 db.write_results_gh(package, 7, uid, repo_url, bug_url, gh_user, value)
             else:
-                print(package, "[go github]", gh_user, repo_url, bug_url)
+                with open(output, "a") as out:
+                    msg = f"{package} [go github] {gh_user} {repo_url} {bug_url}"
+                    print(msg, file=out)
         except:
             pass
 
-def cargo_results(cargo_data, uid, app):
+def cargo_results(cargo_data, uid, app, output):
     cargo_git_results = cargo_data['git_results']
     for git_result in cargo_git_results:
         try:
@@ -139,14 +151,16 @@ def cargo_results(cargo_data, uid, app):
             if app:
                 db.write_results_gh(package, 8, uid, repo_url, bug_url, gh_user, value)
             else:
-                print(package, "[cargo github]", gh_user, repo_url, bug_url)
+                with open(output, "a") as out:
+                    msg = f"{package} [cargo github] {gh_user} {repo_url} {bug_url}"
+                    print(msg, file=out)
         except:
             pass
 
-def process_results(uid, results, app):
+def process_results(uid, results, app, output):
     data = json.loads(results)
-    npm_results(data[0]['npm_results'], uid, app)
-    gem_results(data[1]['gem_results'], uid, app)
-    pip_results(data[2]['pip_results'], uid, app)
-    cargo_results(data[3]['cargo_results'], uid, app)
-    go_results(data[4]['go_results'], uid, app)
+    npm_results(data[0]['npm_results'], uid, app, output)
+    gem_results(data[1]['gem_results'], uid, app, output)
+    pip_results(data[2]['pip_results'], uid, app, output)
+    cargo_results(data[3]['cargo_results'], uid, app, output)
+    go_results(data[4]['go_results'], uid, app, output)
