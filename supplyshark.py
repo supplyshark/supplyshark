@@ -86,6 +86,17 @@ async def cargo(copy_dir, sem):
 
     print(results)
 
+async def go(copy_dir, sem):
+    async with sem:
+        git_results = await shark.go.scan_go(copy_dir)
+        git_results = [result for result in git_results if result is not None and result]
+    
+    results = json.dumps({
+        "git_results": git_results
+    })
+
+    print(results)
+
 async def start(subscription, settings):
     id = settings['installation_id']
     token = await shark.github.get_access_token(id)
@@ -135,10 +146,11 @@ async def start(subscription, settings):
         paths.extend(gh_download)
 
     await asyncio.gather(
-        #npm(copy_dir, sem, super_sem),
-        #gem(copy_dir, super_sem),
-        #pip(copy_dir, sem, super_sem),
-        cargo(copy_dir, sem)
+        npm(copy_dir, sem, super_sem),
+        gem(copy_dir, super_sem),
+        pip(copy_dir, sem, super_sem),
+        cargo(copy_dir, sem),
+        go(copy_dir, sem)
     )
     
 
