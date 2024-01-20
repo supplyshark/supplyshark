@@ -114,6 +114,9 @@ async def start_app(subscription, settings):
     tmp = f"/tmp/.supplyshark/{account}"
     copy_dir = f"/tmp/.supplyshark/_output/{account}"
     Path(tmp, copy_dir).mkdir(parents=True, exist_ok=True)
+    Path(f"{copy_dir}/npm_search.json").touch()
+    Path(f"{copy_dir}/pip_search.json").touch()
+    Path(f"{copy_dir}/gem_search.json").touch()
 
     sem = asyncio.Semaphore(10)
     super_sem = asyncio.Semaphore(50)
@@ -157,6 +160,7 @@ async def start_app(subscription, settings):
     )
 
     rmtree(copy_dir)
+    rmtree(tmp)
 
     return json.dumps(data, indent=2)
 
@@ -185,6 +189,7 @@ async def start_cli(account):
     )
 
     rmtree(copy_dir)
+    rmtree(tmp)
 
     return json.dumps(data, indent=2)
 
