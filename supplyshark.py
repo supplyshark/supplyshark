@@ -42,8 +42,12 @@ async def start(subscription, settings):
                     repo_queue.append(repo)
     
     async with sem:
-        gh_download = [paths.append(await shark.github.gh_clone_repo(account, repo, token)) for repo in repo_queue]
+        gh_download = await asyncio.gather(*[
+            shark.github.gh_clone_repo(account, repo, token) for repo in repo_queue
+        ])
+        paths.extend(gh_download)
 
+    # NPM Functions
     async with sem:
         newlist = await shark.npm.find_package_json(copy_dir)
 
@@ -57,19 +61,20 @@ async def start(subscription, settings):
     async with super_sem:
         await asyncio.gather(*[shark.npm.scope_available(scope) for scope in scope_list])
     
-
+    # GEM Functions
     gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
     
-    async with sem:
-        results = [await shark.gem.scan_gems(gem) for gem in gem_list]
+    async with super_sem:
+        await asyncio.gather(*[shark.gem.scan_gems(gem) for gem in gem_list])
 
+    # PIP Functions
     async with sem:
         piplist = await shark.pip.find_requirements_txt(copy_dir)
 
     pip_list = list(set(piplist + shark.pip.read_pip_search_json(copy_dir)))
     
-    async with sem:
-        results = [await shark.pip.scan_packages(package) for package in pip_list]
+    async with super_sem:
+        await asyncio.gather(*[shark.pip.scan_packages(package) for package in pip_list])
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()
