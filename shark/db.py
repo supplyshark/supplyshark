@@ -33,8 +33,8 @@ def fetch_user_app_settings(organization_id):
 def update_next_scan(organization_id, last_run, next_run):
     supabase = auth()
     data = supabase.table("reporting").update({
-        "last_run": last_run,
-        "next_run": next_run
+        "last_run": str(last_run),
+        "next_run": str(next_run)
     }).eq("organization_id", organization_id).execute()
 
 def today_date():
@@ -50,7 +50,7 @@ def get_scheduled_runs():
 def get_frequency(organization_id):
     supabase = auth()
     data = supabase.table("reporting").select('frequency').eq('organization_id', organization_id).execute()
-    return data
+    return data.data[0]['frequency']
 
 def get_org_id(organization_id):
     supabase = auth()

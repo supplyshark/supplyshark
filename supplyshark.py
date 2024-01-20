@@ -1,8 +1,10 @@
+from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from shutil import rmtree
 from sys import exit
 import argparse
 import asyncio
+import datetime
 import shark
 import json
 
@@ -187,6 +189,19 @@ async def start_cli(account):
     results = json.dumps(data, indent=2)
     print(results)
 
+def set_next_scan(uid):
+    frequency = shark.db.get_frequency(uid)
+    today = datetime.date.today()
+
+    if frequency == "daily":
+        next_scan = today + datetime.timedelta(days=1)
+    elif frequency == "monthly":
+        next_scan = today + relativedelta(months=1)
+    elif frequency == "weekly":
+        next_scan = today + datetime.timedelta(weeks=1)
+    
+    shark.db.update_next_scan(uid, today, next_scan)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
@@ -204,13 +219,17 @@ if __name__ == "__main__":
             if shark.db.is_active(uid):
                 settings = shark.db.fetch_user_app_settings(uid)
                 subscription = shark.db.get_subscription_name(uid)
+                
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
                     asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
-    if args.cli:
+                
+                set_next_scan(uid)
+
+    elif args.cli:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
