@@ -1,35 +1,43 @@
 from . import clean, db, file, github, search
 from subprocess import getoutput
+import asyncio
+from collections import defaultdict
+import json
+import shlex
+from pathlib import Path
+import aiofiles
 
-def find_pip(path):
-    packages = []
-    for p in ["pip", "pip3", "poetry"]:
-        if p != "poetry":
-            args = ["", "--upgrade ", "-U "]
-        else:
-            args = [""]
-        packages += search.install(p, path, args)
-    return packages
+async def find_requirements_txt(directory: Path) -> list[str]:
+    lines = []
 
-def find_reqfile(reqfile):
-    packages = []
-    with open(reqfile, "r", encoding="utf8", errors="ignore") as f:
-        for l in f.readlines():
-            l = clean.package(l)
-            if l[:1].isalpha():
-                packages += [l]
-    return packages
+    async def process_file(file_path: Path) -> None:
+        async with aiofiles.open(file_path, 'r') as f:
+            lines.extend([
+                line.strip().split()[0].split("=")[0].split(">")[0].split("<")[0]
+                for line in await f.readlines() if line[0].isalpha()
+            ])
+    
+    directory = Path(directory).resolve()
+    tasks = [asyncio.create_task(process_file(file)) for file in directory.rglob('requirements.txt')]
+    await asyncio.gather(*tasks)
+    return lines
 
-def run(path, user, repo, output, gitlab):
-    packages = find_pip(path)
-    for reqfile in search.files(path, "requirements.txt"):
-        packages += find_reqfile(reqfile)
+def read_pip_search_json(path: str) -> list:
+    matches = defaultdict(set)
 
-    pips = list(set(packages))
-    for p in pips:
-        if p != "" and p != "pip":
-            stdout = getoutput(f"poetry search '{p}'")
-            if stdout == "":
-                file.out(f"[pip] [{user}/{repo}] {p}", output)
-                url = github.get_url(user, repo, gitlab)
-                #db.write_results(p, 7, user, repo, url)
+    with open(f"{path}/pip_search.json", 'r', encoding='utf-8') as f:
+        for line in f:
+            match_dict = json.loads(line.strip())
+            matches[match_dict['match']]
+    
+    matches_list = list(matches.keys())
+    return clean.search(matches_list)
+
+async def scan_packages(package):
+    command = f"poetry search '{package}'"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                   stdout=asyncio.subprocess.PIPE,
+                                                   stderr=asyncio.subprocess.PIPE)
+    resp = await process.stdout.read()
+    if resp == b'':
+        print(package)

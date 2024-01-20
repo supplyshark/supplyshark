@@ -8,7 +8,7 @@ def check(result):
 
 def search(lines):
     matches = []
-    pattern = re.compile(r'(install|add|ci|i)(?: -(?:g|D|U)| --(?:save|dev|global))? (.*)')
+    pattern = re.compile(r'(install|add|ci|i)(?: -(?:g|D|U)| --(?:save|dev|global|upgrade))? (.*)')
     for line in lines:
         match = pattern.search(line)
         if match and check(match.group(2)):
