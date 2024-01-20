@@ -110,7 +110,23 @@ async def gh_clone_repo(user, repo, token):
         await rmtree(path)
     except:
         pass
-    return path
+
+async def cli_gh_clone_repo(user, repo):
+    path = f"/tmp/.supplyshark/{user}/{repo}"
+    try:
+        async def clone_repo():
+            pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path)
+        
+        async def search_repo():
+            await search.get_packages(path, user, repo)
+
+        clone_task = asyncio.ensure_future(clone_repo())
+        await asyncio.wait([clone_task])
+        search_task = asyncio.ensure_future(search_repo())
+        await asyncio.wait([search_task])
+        await rmtree(path)
+    except:
+        pass
 
 def return_user(value):
     if re.compile(r"[A-Za-z0-9]+/([A-Za-z0-9]+)", re.IGNORECASE).match(value):

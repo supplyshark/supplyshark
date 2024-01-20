@@ -115,7 +115,6 @@ async def start_app(subscription, settings):
     sem = asyncio.Semaphore(10)
     super_sem = asyncio.Semaphore(50)
     repo_queue = []
-    paths = []
 
     async with sem:
         gh_check = await asyncio.gather(*[
@@ -141,11 +140,39 @@ async def start_app(subscription, settings):
                     repo_queue.append(repo)
 
     async with sem:
-        gh_download = await asyncio.gather(*[
+        await asyncio.gather(*[
             shark.github.gh_clone_repo(account, repo, token)
             for repo in repo_queue
         ])
-        paths.extend(gh_download)
+
+    data = await asyncio.gather(
+        npm(copy_dir, sem, super_sem),
+        gem(copy_dir, super_sem),
+        pip(copy_dir, sem, super_sem),
+        cargo(copy_dir, sem),
+        go(copy_dir, sem)
+    )
+
+    rmtree(copy_dir)
+
+    results = json.dumps(data, indent=2)
+    print(results)
+
+async def start_cli(account):
+    tmp = f"/tmp/.supplyshark/{account}"
+    copy_dir = f"/tmp/.supplyshark/_output/{account}"
+    Path(tmp, copy_dir).mkdir(parents=True, exist_ok=True)
+
+    sem = asyncio.Semaphore(10)
+    super_sem = asyncio.Semaphore(50)
+
+    repo_queue = shark.github.gh_get_repos(account)
+
+    async with sem:
+        await asyncio.gather(*[
+            shark.github.cli_gh_clone_repo(account, repo)
+            for repo in repo_queue
+        ])
 
     data = await asyncio.gather(
         npm(copy_dir, sem, super_sem),
@@ -163,6 +190,8 @@ async def start_app(subscription, settings):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
+    parser.add_argument("--cli", type=bool, action=argparse.BooleanOptionalAction)
+    parser.add_argument("-u", type=str)
     args = parser.parse_args()
 
     if args.app:
@@ -181,3 +210,10 @@ if __name__ == "__main__":
                     asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
+    if args.cli:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            asyncio.run(start_cli(args.u))
+        except KeyboardInterrupt:
+            pass
