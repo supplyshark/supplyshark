@@ -32,6 +32,7 @@
 - rubygems
 - npm
 - poetry
+- ripgrep
 
 ```
 pip install -r requirements.txt
