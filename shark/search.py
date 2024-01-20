@@ -23,7 +23,7 @@ async def get_packages(path, username, repo):
         await func(*args)
 
 async def npm_install_files(path, username):
-    command = f"rg -e 'yarn add|npm install|pnpm install' --no-heading -n {path}"
+    command = f"rg -e 'yarn add|npm install|pnpm install|npm i|npm ci' --no-heading -n {path}"
     output_path = f"/tmp/.supplyshark/_output/{username}"
     output_file = f"{output_path}/npm_search.json"
     process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE)
@@ -33,7 +33,9 @@ async def npm_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath, line_number, match = line.split(":")
+            filepath = line.split(":")[0]
+            line_number = line.split(":")[1]
+            match = line.split(":")[2]
             await f.write(json.dumps({
                 "filepath": filepath,
                 "line_number": line_number,
@@ -51,7 +53,9 @@ async def pip_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath, line_number, match = line.split(":")
+            filepath = line.split(":")[0]
+            line_number = line.split(":")[1]
+            match = line.split(":")[2]
             await f.write(json.dumps({
                 "filepath": filepath,
                 "line_number": line_number,
@@ -69,7 +73,9 @@ async def gem_install_files(path, username):
             if line == b'':
                 break
             line = line.decode('utf-8')
-            filepath, line_number, match = line.split(":")
+            filepath = line.split(":")[0]
+            line_number = line.split(":")[1]
+            match = line.split(":")[2]
             await f.write(json.dumps({
                 "filepath": filepath,
                 "line_number": line_number,
@@ -94,14 +100,3 @@ async def copy_files(path, username, repo, filename):
         async with aiofiles.open(file_path, 'rb') as input_file, aiofiles.open(dest_file, 'wb') as output_file:
             data = await input_file.read()
             await output_file.write(data)
-
-
-def gems(path):
-    gems = []
-    for a in ["install ", "i ", '\\\"', '\'']:
-        stdout = getoutput(f'grep -r --exclude-dir=node_modules "gem {a}" {path} | grep -vE "igem |agem |_gem |git:|path:|github.com|rails-assets.org"')
-        pattern = re.compile(r"gem {a}(.*)".format(a=a))
-        result = pattern.findall(stdout)
-        for gem in result:
-            gems += [clean.package_gem(gem)]
-    return list(set(gems))

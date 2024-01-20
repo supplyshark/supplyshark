@@ -1,21 +1,41 @@
-from . import db, file, github, search
+from . import db, file, github, search, clean
 from requests import get
 from subprocess import getoutput
 import re
+import asyncio
+import shlex
+from collections import defaultdict
+import json
+import aiohttp
 
-def gem_404(gem):
-    r = get(f"https://rubygems.org/gems/{gem}")
-    if "It will be mine. Oh yes. It will be mine." in r.text:
-        return True
-    else:
-        return False
+def read_gem_search_json(path: str) -> list:
+    matches = defaultdict(set)
 
-def gem_exists(gem, user, repo, output, gitlab):
-    stdout = getoutput(f"gem search '{gem}'")
-    if len(stdout) == 0 and gem_404(gem):
-        file.out(f"[gem] [{user}/{repo}] {gem}", output)
-        url = github.get_url(user, repo, gitlab)
-        #db.write_results(gem, 5, user, repo, url)
+    with open(f"{path}/gem_search.json", 'r', encoding='utf-8') as f:
+        for line in f:
+            match_dict = json.loads(line.strip())
+            matches[match_dict['match']]
+    
+    matches_list = list(matches.keys())
+    return clean.gem_search(matches_list)
+
+async def scan_gems(gem):
+    command = f"gem search '{gem}'"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                   stdout=asyncio.subprocess.PIPE,
+                                                   stderr=asyncio.subprocess.PIPE)
+    resp = await process.stdout.read()
+    if resp == b'\n':
+        await gem_404(gem)
+
+async def gem_404(gem):
+    url = f"https://rubygems.org/gems/{gem}"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 404:
+                print(gem)
+
 
 def gem_files(gemfile):
     results = []
@@ -26,19 +46,3 @@ def gem_files(gemfile):
             results += result
 
     return results
-        
-def run(path, org_user, repo, output, gitlab):
-    gems = search.gems(path)
-    for gem in gems:
-        gem_exists(gem, org_user, repo, output, gitlab)
-    
-    gh = []
-    for f in search.files(path, "Gemfile"):
-        gh += gem_files(f)
-    
-    users = list(set(gh))
-    for user in users:
-        if github.gh_get_user(user) is None:
-            file.out(f"[gem] [{org_user}/{repo}] GitHub User: {user}", output)
-            url = github.get_url(org_user, repo, gitlab)
-            #db.write_results(user, 6, org_user, repo, url)

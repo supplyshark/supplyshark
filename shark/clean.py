@@ -8,11 +8,30 @@ def check(result):
 
 def search(lines):
     matches = []
-    pattern = re.compile(r'(install|add)(?: -(?:g|D|U)| --(?:save|dev|global))? (.*)')
+    pattern = re.compile(r'(install|add|ci|i)(?: -(?:g|D|U)| --(?:save|dev|global))? (.*)')
     for line in lines:
         match = pattern.search(line)
         if match and check(match.group(2)):
             matches += [package(match.group(2))]
+    return matches
+
+def gem_search(gemlist):
+    matches = []
+    badlines = ['igem ',
+                'agem ',
+                '_gem ',
+                ', git',
+                ', path',
+                ', github',
+                'github.com',
+                'rails-assets.org']
+    
+    pattern = re.compile(r"gem (i |install |\'|\")(.*)")
+    for gem in gemlist:
+        if not any(badline in gem for badline in badlines):
+            match = pattern.search(gem)
+            if match:
+                matches += [package_gem(match.group(2))]
     return matches
 
 def package(line):
