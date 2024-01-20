@@ -1,5 +1,7 @@
 from pathlib import Path
+from shutil import rmtree
 from sys import exit
+import argparse
 import asyncio
 import shark
 import json
@@ -152,21 +154,27 @@ async def start(subscription, settings):
         cargo(copy_dir, sem),
         go(copy_dir, sem)
     )
-    
+
+    rmtree(copy_dir)
 
 if __name__ == "__main__":
-    runs = shark.db.get_scheduled_runs()
-    if not runs:
-        print("No scheduled runs today.")
-        exit(0)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
+    args = parser.parse_args()
 
-    for uid in runs:
-        if shark.db.is_active(uid):
-            settings = shark.db.fetch_user_app_settings(uid)
-            subscription = shark.db.get_subscription_name(uid)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                asyncio.run(start(subscription, settings))
-            except KeyboardInterrupt:
-                pass
+    if args.app:
+        runs = shark.db.get_scheduled_runs()
+        if not runs:
+            print("No scheduled runs today.")
+            exit(0)
+
+        for uid in runs:
+            if shark.db.is_active(uid):
+                settings = shark.db.fetch_user_app_settings(uid)
+                subscription = shark.db.get_subscription_name(uid)
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    asyncio.run(start(subscription, settings))
+                except KeyboardInterrupt:
+                    pass
