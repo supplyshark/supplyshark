@@ -94,11 +94,18 @@ async def start(subscription, settings):
         ])
         paths.extend(gh_download)
 
+    '''
     await asyncio.gather(
         npm(copy_dir, sem, super_sem),
         gem(copy_dir, super_sem),
         pip(copy_dir, sem, super_sem)
     )
+    '''
+
+    async with sem:
+        results = await shark.npm.scan_package_values(copy_dir)
+
+    await shark.npm.process_results(copy_dir, results)
 
 if __name__ == "__main__":
     runs = shark.db.get_scheduled_runs()

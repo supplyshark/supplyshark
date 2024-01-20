@@ -58,7 +58,7 @@ def package(line):
     if "%" in line:
         line = ""
     elif "*" in line:
-        lien = ""
+        line = ""
     elif line.startswith("https://"):
         line = ""
     elif line == "PATH_TO_TARBALL":
@@ -99,8 +99,6 @@ def package(line):
     line = line.lower().rstrip()
 
     if line == "sission":
-        line = ""
-    if line.startswith("**") and line.endswith("**"):
         line = ""
 
     pattern = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+", re.IGNORECASE)

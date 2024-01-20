@@ -100,3 +100,20 @@ async def copy_files(path, username, repo, filename):
         async with aiofiles.open(file_path, 'rb') as input_file, aiofiles.open(dest_file, 'wb') as output_file:
             data = await input_file.read()
             await output_file.write(data)
+
+async def package_json_results(path, value):
+    command = f"rg -tjson -F '{value}' --no-heading -n {path}"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                  stdout=asyncio.subprocess.PIPE,
+                                                  stderr=asyncio.subprocess.PIPE)
+    results = []
+    while True:
+        line = await process.stdout.readline()
+        if line == b'':
+            break
+        line = line.decode('utf-8')
+        filepath = line.split(":")[0]
+        line_number = line.split(":")[1]
+        results.append({"file": filepath.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
+
+    return json.dumps(results)
