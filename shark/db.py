@@ -10,12 +10,27 @@ def auth():
     supabase = create_client(url, key)
     return supabase
 
-def write_results(package_name, type, user, repo_name, repo_url):
+def write_results(package_name, type, organization_id, repo_url, bug_url):
     supabase = auth()
     data = {"package_name": package_name,
-            "type": type, "user": user,
-            "repo_name": repo_name,
-            "repo_url": repo_url}
+            "type": type, "organization_id": organization_id,
+            "url": repo_url,
+            "resolved": False,
+            "ignore": False,
+            "bug_url": bug_url}
+    d = supabase.table("results").insert(data).execute()
+    assert len(d.data) > 0
+
+def write_results_gh(package_name, type, organization_id, repo_url, bug_url, github_user, github_value):
+    supabase = auth()
+    data = {"package_name": package_name,
+            "type": type, "organization_id": organization_id,
+            "url": repo_url,
+            "resolved": False,
+            "ignore": False,
+            "bug_url": bug_url,
+            "github_user": github_user,
+            "github_value": github_value}
     d = supabase.table("results").insert(data).execute()
     assert len(d.data) > 0
 

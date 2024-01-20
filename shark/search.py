@@ -111,6 +111,23 @@ async def package_json_results(path, value):
         line = line.decode('utf-8')
         file_path = line.split(":")[0]
         line_number = line.split(":")[1]
+        results.append([{"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value}])
+
+    return json.dumps(results)
+
+async def package_json_results_git(path, value):
+    command = f"rg -tjson -g package.json -F '{value}' --no-heading -n {path}"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                  stdout=asyncio.subprocess.PIPE,
+                                                  stderr=asyncio.subprocess.PIPE)
+    results = []
+    while True:
+        line = await process.stdout.readline()
+        if line == b'':
+            break
+        line = line.decode('utf-8')
+        file_path = line.split(":")[0]
+        line_number = line.split(":")[1]
         results.append({"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
 
     return json.dumps(results)
@@ -129,6 +146,23 @@ async def cargo_toml_results(path, value):
         file_path = line.split(":")[0]
         line_number = line.split(":")[1]
         results.append({"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value})
+
+    return json.dumps(results)
+
+async def requirements_txt_results(path, value):
+    command = f"rg -g requirements.txt -F '{value}' --no-heading -n {path}"
+    process = await asyncio.create_subprocess_exec(*shlex.split(command),
+                                                  stdout=asyncio.subprocess.PIPE,
+                                                  stderr=asyncio.subprocess.PIPE)
+    results = []
+    while True:
+        line = await process.stdout.readline()
+        if line == b'':
+            break
+        line = line.decode('utf-8')
+        file_path = line.split(":")[0]
+        line_number = line.split(":")[1]
+        results.append([{"file": file_path.split("/tmp/.supplyshark/_output/")[1], "line_number": line_number, "value": value}])
 
     return json.dumps(results)
 
@@ -155,6 +189,6 @@ async def package_search_json_results(path, value):
         async for line in f:
             item = json.loads(line.strip())
             if value in item['match']:
-                matches.append(item)
+                matches.append([item])
 
     return matches

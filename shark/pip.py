@@ -40,6 +40,9 @@ async def scan_packages(path, package):
     resp = await process.stdout.read()
     results = []
     if resp == b'':
+        results = [{"package": package}]
+        data = await search.requirements_txt_results(path, package)
+        results.extend(json.loads(data))
         search_data = await search.package_search_json_results(f"{path}/pip_search.json", package)
         results.extend(search_data)
     

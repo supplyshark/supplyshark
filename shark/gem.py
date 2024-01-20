@@ -27,6 +27,7 @@ async def scan_gems(path, gem):
     results = []
 
     if resp == b'\n' and await gem_404(gem):
+        results = [{"package": gem}]
         search_data = await search.package_search_json_results(f"{path}/gem_search.json", gem)
         results.extend(search_data)
     return results    

@@ -8,7 +8,7 @@ import asyncio
 import shlex
 
 async def process_results_git(path, git_results):
-    json_data = [await search.package_json_results(path, value['value']) for _, value in git_results.items()]
+    json_data = [await search.package_json_results_git(path, value['value']) for _, value in git_results.items()]
 
     new_json_data = []
     for item in json_data:
@@ -117,8 +117,9 @@ async def scan_packages(path, package):
     results = []
 
     if "is not in this registry" in resp.decode('utf-8'):
+        results = [{"package": package}]
         data = await search.package_json_results(path, package)
-        results.append(json.loads(data))
+        results.extend(json.loads(data))
         search_data = await search.package_search_json_results(f"{path}/npm_search.json", package)
         results.extend(search_data)
     return results
@@ -134,8 +135,9 @@ async def scope_available(path, scope):
 
     if "No matches found" in resp.decode('utf-8'):
         if await scope_404(scope):
+            results = [{"scope": scope}]
             data = await search.package_json_results(path, scope)
-            results.append(json.loads(data))
+            results.extend(json.loads(data))
             search_data = await search.package_search_json_results(f"{path}/npm_search.json", scope)
             results.extend(search_data)
     return results

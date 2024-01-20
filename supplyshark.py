@@ -52,13 +52,14 @@ async def gem(copy_dir, super_sem):
             shark.gem.scan_gems(copy_dir, gem)
             for gem in gem_list
         ])
-        package_results = [result for result in package_results if result is not None and result]
+        if package_results:
+            package_results = [result for result in package_results if result is not None and result]
     
     results = {
         "package_results": package_results
     }
 
-    return {"gem results": results}
+    return {"gem_results": results}
 
 async def pip(copy_dir, sem, super_sem):
     async with sem:
@@ -77,7 +78,7 @@ async def pip(copy_dir, sem, super_sem):
         "package_results": package_results
     }
 
-    return {"pip results": results}
+    return {"pip_results": results}
 
 async def cargo(copy_dir, sem):
     async with sem:
@@ -88,7 +89,7 @@ async def cargo(copy_dir, sem):
         "git_results": git_results
     }
 
-    return {"cargo results": results}
+    return {"cargo_results": results}
 
 async def go(copy_dir, sem):
     async with sem:
@@ -99,7 +100,7 @@ async def go(copy_dir, sem):
         "git_results": git_results
     }
 
-    return {"go results": results}
+    return {"go_results": results}
 
 async def start_app(subscription, settings):
     id = settings['installation_id']
@@ -220,7 +221,7 @@ def get_result_count(results):
 def set_scan_stats(uid, results):
     count = get_result_count(results)
     shark.db.insert_scan_stats(uid, count)
-
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
@@ -245,10 +246,11 @@ if __name__ == "__main__":
                     results = asyncio.run(start_app(subscription, settings))
                 except KeyboardInterrupt:
                     pass
-                
-                #set_next_scan(uid)
-                #set_scan_stats(uid, results)
-                print(results)
+                print(get_result_count(results))
+                set_next_scan(uid)
+                set_scan_stats(uid, results)
+                shark.results.process_results(uid, results, args.app)
+
 
     elif args.cli:
         loop = asyncio.new_event_loop()
