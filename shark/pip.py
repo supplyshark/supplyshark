@@ -33,11 +33,14 @@ def read_pip_search_json(path: str) -> list:
     matches_list = list(matches.keys())
     return clean.search(matches_list)
 
-async def scan_packages(package):
+async def scan_packages(path, package):
     command = f"poetry search '{package}'"
     process = await asyncio.create_subprocess_exec(*shlex.split(command),
                                                    stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE)
     resp = await process.stdout.read()
+    results = []
     if resp == b'':
-        print(package)
+        search_data = await search.package_search_json_results(f"{path}/pip_search.json", package)
+        results.extend(search_data)
+    return results

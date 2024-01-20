@@ -19,14 +19,19 @@ def read_gem_search_json(path: str) -> list:
     matches_list = list(matches.keys())
     return clean.gem_search(matches_list)
 
-async def scan_gems(gem):
+async def scan_gems(path, gem):
     command = f"gem search '{gem}'"
     process = await asyncio.create_subprocess_exec(*shlex.split(command),
                                                    stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE)
     resp = await process.stdout.read()
-    if resp == b'\n':
-        await gem_404(gem)
+    
+    results = []
+
+    if resp == b'\n' and await gem_404(gem):
+        search_data = await search.package_search_json_results(f"{path}/gem_search.json", gem)
+        results.extend(search_data)
+    return results    
 
 async def gem_404(gem):
     url = f"https://rubygems.org/gems/{gem}"
@@ -34,7 +39,9 @@ async def gem_404(gem):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status == 404:
-                print(gem)
+                return True
+            else:
+                return False
 
 
 def gem_files(gemfile):

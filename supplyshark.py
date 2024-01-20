@@ -2,6 +2,7 @@ from pathlib import Path
 from sys import exit
 import asyncio
 import shark
+import json
 
 async def npm(copy_dir, sem, super_sem):
     async with sem:
@@ -31,21 +32,30 @@ async def npm(copy_dir, sem, super_sem):
 
     await shark.npm.process_results_git(copy_dir, git_results)
 
-    combined_results = {
+    combined_results = json.dumps({
         "package_results": package_results,
         "scope_results": scope_results,
         "git_results": git_results
-    }
+    })
+
+    print(combined_results)
 
 
 async def gem(copy_dir, super_sem):
     gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
 
     async with super_sem:
-        await asyncio.gather(*[
-            shark.gem.scan_gems(gem)
+        package_results = await asyncio.gather(*[
+            shark.gem.scan_gems(copy_dir, gem)
             for gem in gem_list
         ])
+        package_results = [result for result in package_results if result is not None and result]
+    
+    results = json.dumps({
+        "package_results": package_results
+    })
+
+    print(results)
 
 async def pip(copy_dir, sem, super_sem):
     async with sem:
@@ -54,10 +64,17 @@ async def pip(copy_dir, sem, super_sem):
     pip_list = list(set(piplist + shark.pip.read_pip_search_json(copy_dir)))
 
     async with super_sem:
-        await asyncio.gather(*[
-            shark.pip.scan_packages(package)
+        package_results = await asyncio.gather(*[
+            shark.pip.scan_packages(copy_dir, package)
             for package in pip_list
         ])
+        package_results = [result for result in package_results if result is not None and result]
+    
+    results = json.dumps({
+        "package_results": package_results
+    })
+
+    print(results)
 
 async def start(subscription, settings):
     id = settings['installation_id']
@@ -108,9 +125,9 @@ async def start(subscription, settings):
         paths.extend(gh_download)
 
     await asyncio.gather(
-        npm(copy_dir, sem, super_sem)
-        #gem(copy_dir, super_sem),
-        #pip(copy_dir, sem, super_sem)
+        #npm(copy_dir, sem, super_sem)
+        #gem(copy_dir, super_sem)
+        pip(copy_dir, sem, super_sem)
     )
     
 
