@@ -3,7 +3,6 @@ from sys import exit
 import asyncio
 import shark
 
-
 async def npm(copy_dir, sem, super_sem):
     async with sem:
         newlist = await shark.npm.find_package_json(copy_dir)
