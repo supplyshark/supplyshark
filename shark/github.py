@@ -128,3 +128,8 @@ def return_user(value):
     else:
         user = ""
     return user
+
+def return_user_regular(value):
+    pattern = re.compile(r"github\.com/(.*?)/+", re.IGNORECASE)
+    user = pattern.findall(value)[0]
+    return user

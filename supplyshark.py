@@ -29,8 +29,7 @@ async def npm(copy_dir, sem, super_sem):
 
     async with sem:
         git_results = await shark.npm.scan_package_values(copy_dir)
-
-    await shark.npm.process_results_git(copy_dir, git_results)
+        git_results = [result for result in git_results if result is not None and result]
 
     combined_results = json.dumps({
         "package_results": package_results,
@@ -72,6 +71,17 @@ async def pip(copy_dir, sem, super_sem):
     
     results = json.dumps({
         "package_results": package_results
+    })
+
+    print(results)
+
+async def cargo(copy_dir, sem):
+    async with sem:
+        git_results = await shark.cargo.scan_cargo(copy_dir)
+        git_results = [result for result in git_results if result is not None and result]
+    
+    results = json.dumps({
+        "git_results": git_results
     })
 
     print(results)
@@ -125,9 +135,10 @@ async def start(subscription, settings):
         paths.extend(gh_download)
 
     await asyncio.gather(
-        npm(copy_dir, sem, super_sem),
-        gem(copy_dir, super_sem),
-        pip(copy_dir, sem, super_sem)
+        #npm(copy_dir, sem, super_sem),
+        #gem(copy_dir, super_sem),
+        #pip(copy_dir, sem, super_sem),
+        cargo(copy_dir, sem)
     )
     
 

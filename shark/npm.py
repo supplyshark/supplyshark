@@ -25,9 +25,6 @@ async def process_results_git(path, git_results):
 
     return new_json_data
 
-#async def process_results_package(path, package_results):
-
-
 async def find_package_json(directory: str) -> list:
     packages = defaultdict(set)
     badvalues = ["workspace:",
@@ -98,7 +95,8 @@ async def scan_package_values(directory: str) -> dict:
             if user == github.return_user(v) and result:
                 results_dict[k] = {"value": v, "user": user}
 
-    return results_dict
+    json_results = await process_results_git(directory, results_dict)
+    return json_results
 
 def read_npm_search_json(path: str) -> list:
     matches = defaultdict(set)

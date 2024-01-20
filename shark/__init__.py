@@ -1,1 +1,1 @@
-from . import db, github, npm, cargo, pip, go, gem
+from . import cargo, db, github, npm, pip, gem
