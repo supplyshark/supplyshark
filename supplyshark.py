@@ -13,7 +13,7 @@ async def npm(copy_dir, sem, super_sem):
         newlist = await shark.npm.find_package_json(copy_dir)
 
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
-    
+    print(f"[+] Analyzing {len(package_list)} npm packages")
     async with super_sem:
         package_results = asyncio.gather(*[
             shark.npm.scan_packages(copy_dir, package)
@@ -23,6 +23,7 @@ async def npm(copy_dir, sem, super_sem):
         package_results = [result for result in package_results if result is not None and result]
 
     scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
+    print(f"[+] Analyzing {len(scope_list)} scopes")
 
     async with super_sem:
         scope_results = await asyncio.gather(*[
@@ -46,6 +47,7 @@ async def npm(copy_dir, sem, super_sem):
 
 async def gem(copy_dir, super_sem):
     gem_list = list(set(shark.gem.read_gem_search_json(copy_dir)))
+    print(f"[+] Analyzing {len(gem_list)} gems")
 
     async with super_sem:
         package_results = await asyncio.gather(*[
@@ -66,6 +68,7 @@ async def pip(copy_dir, sem, super_sem):
         piplist = await shark.pip.find_requirements_txt(copy_dir)
 
     pip_list = list(set(piplist + shark.pip.read_pip_search_json(copy_dir)))
+    print(f"[+] Analyzing {len(pip_list)} python packages")
 
     async with super_sem:
         package_results = await asyncio.gather(*[
@@ -145,9 +148,15 @@ async def start_app(subscription, settings):
                 if not _is['repo_forked']:
                     repo_queue.append(repo)
 
-    async with sem:
+    async with super_sem:
         await asyncio.gather(*[
             shark.github.gh_clone_repo(account, repo, token)
+            for repo in repo_queue
+        ])
+    
+    async with sem:
+        await asyncio.gather(*[
+            shark.search.get_packages(f"{tmp}/{repo}", account, repo)
             for repo in repo_queue
         ])
 
@@ -179,19 +188,21 @@ async def start_cli(account):
     repo_queue = shark.github.gh_get_repos(account)
     print(f"[+] Fetched {len(repo_queue)} repos")
     
-    async with sem:
+    async with super_sem:
         await asyncio.gather(*[
             shark.github.cli_gh_clone_repo(account, repo)
             for repo in repo_queue
         ])
     
-    async with sem:
+    async with super_sem:
         await asyncio.gather(*[
             shark.search.get_packages(f"{tmp}/{repo}", account, repo)
             for repo in repo_queue
         ])
     
     rmtree(tmp)
+    print(f"[-] /tmp/.supplyshark/{account} removed.")
+    print("[+] Starting scanning.")
 
     data = await asyncio.gather(
         npm(copy_dir, sem, super_sem),
@@ -280,6 +291,7 @@ if __name__ == "__main__":
                 results = asyncio.run(start_cli(args.u))
             except KeyboardInterrupt:
                 pass
+            shark.results.process_results('', results, False, args.o)
         elif args.rl:
             with open(args.rl, 'r') as f:
                 for ff in f.readlines():
@@ -287,5 +299,4 @@ if __name__ == "__main__":
                         results = asyncio.run(start_cli(ff.strip()))
                     except KeyboardInterrupt:
                         pass
-        if results:
-            shark.results.process_results('', results, False, args.o)
+                    shark.results.process_results('', results, False, args.o)

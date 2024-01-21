@@ -96,18 +96,7 @@ async def gh_clone_repo(user, repo, token):
     auth_method = 'x-access-token'
     try:
         callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(auth_method, token))
-
-        async def clone_repo():
-            pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
-        
-        async def search_repo():
-            await search.get_packages(path, user, repo)
-
-        clone_task = asyncio.ensure_future(clone_repo())
-        await asyncio.wait([clone_task])
-        search_task = asyncio.ensure_future(search_repo())
-        await asyncio.wait([search_task])
-        await rmtree(path)
+        pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path, callbacks=callbacks)
     except:
         pass
 
@@ -116,10 +105,6 @@ async def cli_gh_clone_repo(user, repo):
     try:
         print(f"[+] Downloading {user}/{repo}")
         pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path)
-        
-        async def search_repo():
-            print(f"[+] Copying files from {user}/{repo} to {path}")
-            await search.get_packages(path, user, repo)
     except:
         pass
 
