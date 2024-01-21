@@ -184,6 +184,14 @@ async def start_cli(account):
             shark.github.cli_gh_clone_repo(account, repo)
             for repo in repo_queue
         ])
+    
+    async with sem:
+        await asyncio.gather(*[
+            shark.search.get_packages(f"{tmp}/{repo}", account, repo)
+            for repo in repo_queue
+        ])
+    
+    rmtree(tmp)
 
     data = await asyncio.gather(
         npm(copy_dir, sem, super_sem),
@@ -194,7 +202,6 @@ async def start_cli(account):
     )
 
     rmtree(copy_dir)
-    rmtree(tmp)
 
     return json.dumps(data, indent=2)
 
@@ -274,10 +281,10 @@ if __name__ == "__main__":
             except KeyboardInterrupt:
                 pass
         elif args.rl:
-            with open(args.rl, 'a') as f:
+            with open(args.rl, 'r') as f:
                 for ff in f.readlines():
                     try:
-                        results = asyncio.run(start_cli(ff))
+                        results = asyncio.run(start_cli(ff.strip()))
                     except KeyboardInterrupt:
                         pass
         if results:

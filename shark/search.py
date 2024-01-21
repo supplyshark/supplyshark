@@ -5,6 +5,7 @@ import json
 import shlex
 
 async def get_packages(path, username, repo):
+    print(f"[+] Copying files from {username}/{repo}")
     func_args_list = [
         (npm_install_files, (path, username)),
         (pip_install_files, (path, username)),
