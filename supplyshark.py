@@ -15,11 +15,11 @@ async def npm(copy_dir, sem, super_sem):
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
     
     async with super_sem:
-        package_results = await asyncio.gather(*[
+        package_results = [
             shark.npm.scan_packages(copy_dir, package)
             for package in package_list
             if not package.startswith("@")
-        ])
+        ]
         package_results = [result for result in package_results if result is not None and result]
 
     scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
