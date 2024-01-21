@@ -115,9 +115,11 @@ async def cli_gh_clone_repo(user, repo):
     path = f"/tmp/.supplyshark/{user}/{repo}"
     try:
         async def clone_repo():
+            print(f"[+] Downloading {user}/{repo}")
             pygit2.clone_repository(f"https://github.com/{user}/{repo}.git", path)
         
         async def search_repo():
+            print(f"[+] Copying files from {user}/{repo} to {path}")
             await search.get_packages(path, user, repo)
 
         clone_task = asyncio.ensure_future(clone_repo())

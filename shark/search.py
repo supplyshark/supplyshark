@@ -20,7 +20,7 @@ async def get_packages(path, username, repo):
         await func(*args)
 
 async def npm_install_files(path, username):
-    command = f"rg -e 'yarn add|npm install|pnpm install|npm i|npm ci' --no-heading -n {path}"
+    command = f"rg -e 'yarn add|npm install|pnpm install|npm i|npm ci' --no-heading --glob '!node_modules' -g '!yarn-error.log' -n {path}"
     output_path = f"/tmp/.supplyshark/_output/{username}"
     output_file = f"{output_path}/npm_search.json"
     process = await asyncio.create_subprocess_exec(*shlex.split(command), stdout=asyncio.subprocess.PIPE)
@@ -84,7 +84,8 @@ async def copy_files(path, username, repo, filename):
     dest_dir = pathlib.Path(f'/tmp/.supplyshark/_output/{username}/{repo}')
 
     for root in pathlib.Path(path).rglob(filename):
-        file_paths.append(root)
+        if 'node_modules' not in root.parts:
+            file_paths.append(root)
     
     for file_path in file_paths:
         source_file = file_path.relative_to(path)

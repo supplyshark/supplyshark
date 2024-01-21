@@ -15,11 +15,11 @@ async def npm(copy_dir, sem, super_sem):
     package_list = list(set(newlist + shark.npm.read_npm_search_json(copy_dir)))
     
     async with super_sem:
-        package_results = [
+        package_results = asyncio.gather(*[
             shark.npm.scan_packages(copy_dir, package)
             for package in package_list
             if not package.startswith("@")
-        ]
+        ])
         package_results = [result for result in package_results if result is not None and result]
 
     scope_list = list(set(scope.split("/")[0] for scope in package_list if scope.startswith("@")))
@@ -165,15 +165,20 @@ async def start_app(subscription, settings):
     return json.dumps(data, indent=2)
 
 async def start_cli(account):
+    print(f"[+] Starting analysis of {account}")
     tmp = f"/tmp/.supplyshark/{account}"
     copy_dir = f"/tmp/.supplyshark/_output/{account}"
     Path(tmp, copy_dir).mkdir(parents=True, exist_ok=True)
+    Path(f"{copy_dir}/npm_search.json").touch()
+    Path(f"{copy_dir}/pip_search.json").touch()
+    Path(f"{copy_dir}/gem_search.json").touch()
 
     sem = asyncio.Semaphore(10)
     super_sem = asyncio.Semaphore(50)
 
     repo_queue = shark.github.gh_get_repos(account)
-
+    print(f"[+] Fetched {len(repo_queue)} repos")
+    
     async with sem:
         await asyncio.gather(*[
             shark.github.cli_gh_clone_repo(account, repo)
@@ -233,6 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--cli", type=bool, action=argparse.BooleanOptionalAction)
     parser.add_argument("-u", type=str)
     parser.add_argument("-o", type=str)
+    parser.add_argument("-rl", type=str)
     args = parser.parse_args()
 
     if args.app:
@@ -262,10 +268,17 @@ if __name__ == "__main__":
     elif args.cli:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        try:
-            results = asyncio.run(start_cli(args.u))
-        except KeyboardInterrupt:
-            pass
-        
+        if args.u:
+            try:
+                results = asyncio.run(start_cli(args.u))
+            except KeyboardInterrupt:
+                pass
+        elif args.rl:
+            with open(args.rl, 'a') as f:
+                for ff in f.readlines():
+                    try:
+                        results = asyncio.run(start_cli(ff))
+                    except KeyboardInterrupt:
+                        pass
         if results:
             shark.results.process_results('', results, False, args.o)
