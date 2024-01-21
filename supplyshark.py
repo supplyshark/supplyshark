@@ -278,9 +278,8 @@ if __name__ == "__main__":
                     pass
 
                 set_next_scan(uid)
-                if results:
-                    set_scan_stats(uid, results)
-                    shark.results.process_results(uid, results, args.app, '')
+                set_scan_stats(uid, results)
+                shark.results.process_results(uid, results, args.app, '')
 
 
     elif args.cli:
