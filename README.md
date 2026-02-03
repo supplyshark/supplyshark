@@ -101,3 +101,7 @@ We welcome contributions from the security community!
 
 ## 📄 License
 MIT License. See `LICENSE`.
+
+---
+
+A cybersecurity tool by [@haccer](https://github.com/haccer)
