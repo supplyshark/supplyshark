@@ -1,4 +1,3 @@
-from . import db
 from colorama import Fore
 import json
 
@@ -8,27 +7,13 @@ def get_branch(repo_name, repos):
             return repo['default_branch']
     return None
 
-def write_db(package, type, uid, repo_url, bug_url):
-    data = db.check_result_exists(uid, package, type)
-    if data.count:
-        id = data.data[0]['id']
-        pdata = db.check_result_new(id)
-        repo_urls = pdata['repo_url']
-        bug_urls = pdata['bug_url']
-        if repo_url.sort() != repo_urls.sort():
-            db.delete_result(id)
-            db.write_results(package, type, uid, repo_url, bug_url)
-            return 1
-        elif bug_url.sort() != bug_urls.sort():
-            db.delete_result(id)
-            db.write_results(package, type, uid, repo_url, bug_url)
-            return 1
-    if not data.count:
-        db.write_results(package, type, uid, repo_url, bug_url)
-        return 1
-    return 0
-    
-def npm_results(npm_data, uid, app, repos):
+def _write_result(label, item, repo_urls, bug_urls, output_file):
+    msg = f"[{label}] {item} {list(set(repo_urls))} {list(set(bug_urls))}"
+    print(f"{Fore.CYAN}{msg}{Fore.RESET}")
+    with open(output_file, "a") as f:
+        print(msg, file=f)
+
+def npm_results(npm_data, repos, output_file="results.txt"):
     npm_package_results = npm_data["package_results"]
     npm_scope_results = npm_data["scope_results"]
     count = 0
@@ -49,14 +34,8 @@ def npm_results(npm_data, uid, app, repos):
                 bug_urls.append(bug_url)
                 repo_urls.append(repo_url)
 
-            if app:
-                new_count = write_db(package, 1, uid, list(set(repo_urls)), list(set(bug_urls)))
-                count += new_count
-            else:
-                msg = f"[npm] {package} {list(set(repo_urls))} {list(set(bug_urls))}"
-                print(f"{Fore.CYAN}{msg}{Fore.RESET}")
-                with open("results.txt", "a") as f:
-                    print(msg, file=f)
+            _write_result("npm", package, repo_urls, bug_urls, output_file)
+            count += 1
         except:
             pass
 
@@ -76,20 +55,14 @@ def npm_results(npm_data, uid, app, repos):
                 bug_urls.append(bug_url)
                 repo_urls.append(repo_url)
 
-            if app:
-                new_count = write_db(scope, 2, uid, list(set(repo_urls)), list(set(bug_urls)))
-                count += new_count
-            else:
-                msg = f"[npm scope] {scope} {list(set(repo_urls))} {list(set(bug_urls))}"
-                print(f"{Fore.CYAN}{msg}{Fore.RESET}")
-                with open("results.txt", "a") as f:
-                    print(msg, file=f)
+            _write_result("npm scope", scope, repo_urls, bug_urls, output_file)
+            count += 1
         except:
             pass
     
     return count
 
-def gem_results(gem_data, uid, app, repos):
+def gem_results(gem_data, repos, output_file="results.txt"):
     gem_package_results = gem_data['package_results']
     count = 0
 
@@ -109,20 +82,14 @@ def gem_results(gem_data, uid, app, repos):
                 bug_urls.append(bug_url)
                 repo_urls.append(repo_url)
 
-            if app:
-                new_count = write_db(package, 4, uid, list(set(repo_urls)), list(set(bug_urls)))
-                count += new_count
-            else:
-                msg = f"[gem] {package} {list(set(repo_urls))} {list(set(bug_urls))}"
-                print(f"{Fore.CYAN}{msg}{Fore.RESET}")
-                with open("results.txt", "a") as f:
-                    print(msg, file=f)
+            _write_result("gem", package, repo_urls, bug_urls, output_file)
+            count += 1
         except:
             pass
     
     return count
 
-def pip_results(pip_data, uid, app, repos):
+def pip_results(pip_data, repos, output_file="results.txt"):
     pip_package_results = pip_data['package_results']
     count = 0
 
@@ -142,25 +109,19 @@ def pip_results(pip_data, uid, app, repos):
                 bug_urls.append(bug_url)
                 repo_urls.append(repo_url)
 
-            if app:
-                new_count = write_db(package, 6, uid, list(set(repo_urls)), list(set(bug_urls)))
-                count += new_count
-            else:
-                msg = f"[pip] {package} {list(set(repo_urls))} {list(set(bug_urls))}"
-                print(f"{Fore.CYAN}{msg}{Fore.RESET}")
-                with open("results.txt", "a") as f:
-                    print(msg, file=f)
+            _write_result("pip", package, repo_urls, bug_urls, output_file)
+            count += 1
         except:
             pass
     
     return count
 
-def process_results(uid, results, app, repos):
+def process_results(results, repos, output_file="results.txt"):
     data = json.loads(results)
     
     counts = [
-        npm_results(data[0]['npm_results'], uid, app, repos),
-        gem_results(data[1]['gem_results'], uid, app, repos)
+        npm_results(data[0]['npm_results'], repos, output_file),
+        gem_results(data[1]['gem_results'], repos, output_file)
     ]
 
     return sum(counts)

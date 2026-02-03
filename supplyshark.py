@@ -1,13 +1,11 @@
 from colorama import Fore
-from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from shutil import rmtree
 from sys import exit
 import argparse
 import asyncio
-import datetime
-import shark
 import json
+import shark
 
 info_msg = f"[{Fore.LIGHTBLUE_EX}*{Fore.RESET}]"
 found_msg = f"[{Fore.LIGHTGREEN_EX}+{Fore.RESET}]"
@@ -184,66 +182,6 @@ def create_dir(account):
     Path(copy_dir).mkdir(parents=True, exist_ok=True)
     return tmp, copy_dir
 
-async def start_app(subscription, settings):
-    id = settings['installation_id']
-    token = await shark.github.get_access_token(id)
-
-    account = settings['account_name']
-    repos = settings['repositories']
-    forked = settings['forked']
-    archived = settings['archived']
-
-    print(f"{info_msg} Scanning account {account}")
-
-    tmp, copy_dir = create_dir(account)
-
-    sem = asyncio.Semaphore(10)
-    super_sem = asyncio.Semaphore(50)
-    mini_sem = asyncio.Semaphore(2)
-    repo_queue = []
-
-    async with mini_sem:
-        gh_check = await asyncio.gather(*[
-            shark.github.check_github_repo(token, account, repo)
-            for repo in repos
-        ])
-
-    for repo, _is in zip(repos, gh_check):
-        if subscription != "premium":
-            if not _is['repo_private'] and not _is['repo_archived'] and not _is['repo_forked']:
-                repo_queue.append(repo)
-        else:
-            if forked and archived:
-                repo_queue.append(repo)
-            elif not forked and not archived:
-                if not _is['repo_forked'] and not _is['repo_archived']:
-                    repo_queue.append(repo)
-            elif forked and not archived:
-                if not _is['repo_archived']:
-                    repo_queue.append(repo)
-            elif not forked and archived:
-                if not _is['repo_forked']:
-                    repo_queue.append(repo)
-    
-    if not repo_queue:
-        cleanup(copy_dir, tmp)
-        return
-
-    async with sem:
-        await asyncio.gather(*[
-            asyncio.to_thread(shark.github.gh_clone_repo, account, repo, token)
-            for repo in repo_queue
-        ])
-
-    data = await asyncio.gather(
-        npm(copy_dir, sem, super_sem),
-        gem(copy_dir, super_sem)
-    )
-
-    cleanup(copy_dir, tmp)
-
-    return json.dumps(data, indent=2), gh_check
-
 async def start_cli(account, repo):
     tmp, copy_dir = create_dir(account)
 
@@ -283,102 +221,40 @@ async def start_cli(account, repo):
 
     return json.dumps(data, indent=2), gh_check
 
-def set_next_scan(uid):
-    frequency = shark.db.get_frequency(uid)
-    today = datetime.date.today()
-
-    if frequency == "daily":
-        next_scan = today + datetime.timedelta(days=1)
-    elif frequency == "monthly":
-        next_scan = today + relativedelta(months=1)
-    elif frequency == "weekly":
-        next_scan = today + datetime.timedelta(weeks=1)
-    
-    shark.db.update_next_scan(uid, today, next_scan)
-
-def get_result_count(results):
-    count = 0
-    data = json.loads(results)
-
-    def recursive_lookup(data, key):
-        nonlocal count
-        if isinstance(data, dict):
-            if key in data:
-                count += 1
-            for value in data.values():
-                recursive_lookup(value, key)
-        elif isinstance(data, list):
-            for item in data:
-                recursive_lookup(item, key)
-    recursive_lookup(data, "package")
-    recursive_lookup(data, 'scope')
-    return count
-        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--app", type=bool, action=argparse.BooleanOptionalAction)
     parser.add_argument("--cli", type=bool, action=argparse.BooleanOptionalAction)
     parser.add_argument("-u", type=str)
     parser.add_argument("-l", type=str)
     parser.add_argument('-r', type=str)
     args = parser.parse_args()
 
-    if args.app:
-        runs = shark.db.get_scheduled_runs()
-        if not runs:
-            print(f"{no_msg} No scheduled runs today.")
-            exit(0)
+    if args.u is not None:
+        print(f"{info_msg} Scanning account {args.u}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        for uid in runs:
-            if shark.db.is_active(uid):
-                settings = shark.db.fetch_user_app_settings(uid)
-                subscription = shark.db.get_subscription_name(uid)
-                
+        try:
+            results, gh_check = asyncio.run(start_cli(args.u, args.r))
+        except KeyboardInterrupt:
+            pass
+        
+        if results:
+            shark.results.process_results(results, gh_check)
+    elif args.l is not None:
+        with open(args.l, 'r') as f:
+            for u in f.readlines():
+                print(f"{info_msg} Scanning account {u.strip()}")
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
                 try:
-                    results, gh_check = asyncio.run(start_app(subscription, settings))
+                    results, gh_check = asyncio.run(start_cli(u.strip(), None))
                 except KeyboardInterrupt:
                     pass
                 
                 if results:
-                    set_next_scan(uid)
-                    new_count = shark.results.process_results(uid, results, args.app, gh_check)
-                    count = get_result_count(results)
-                    shark.db.insert_scan_stats(uid, count, new_count)
-
-                    if new_count:
-                        shark.integration.slack_write_alert_cust(uid, count, new_count, settings['account_name'])
-                        shark.integration.slack_write_alert_home(count, new_count, settings['account_name'])
-                        shark.email.send_email(uid, count, settings["account_name"])
-    elif args.cli:
-        if args.u is not None:
-            print(f"{info_msg} Scanning account {args.u}")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-            try:
-                results, gh_check = asyncio.run(start_cli(args.u, args.r))
-            except KeyboardInterrupt:
-                pass
-            
-            if results:
-                shark.results.process_results(None, results, False, gh_check)
-        else:
-            with open(args.l, 'r') as f:
-                for u in f.readlines():
-                    print(f"{info_msg} Scanning account {u.strip()}")
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                    try:
-                        results, gh_check = asyncio.run(start_cli(u.strip(), None))
-                    except KeyboardInterrupt:
-                        pass
-                    
-                    if results:
-                        shark.results.process_results(None, results, False, gh_check)
+                    shark.results.process_results(results, gh_check)
     else:
-        print(f"{no_msg} Please specify --app or --cli")
+        print(f"{no_msg} Please specify -u or -l")
         exit(0)
